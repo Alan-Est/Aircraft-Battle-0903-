@@ -65,7 +65,7 @@
             // timer3
             // 
             this.timer3.Enabled = true;
-            this.timer3.Interval = 6000;
+            this.timer3.Interval = 60000;
             this.timer3.Tick += new System.EventHandler(this.timer3_Tick);
             // 
             // timer4
@@ -76,7 +76,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(784, 562);
+            this.ClientSize = new System.Drawing.Size(784, 561);
             this.DoubleBuffered = true;
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));

@@ -13,12 +13,13 @@ using System.Threading;
 using System.Media;
 using System.Xml;
 using System.IO;
-using System.Runtime.InteropServices;   
+using System.Runtime.InteropServices;
 using Microsoft.DirectX.DirectSound;
 using Microsoft.DirectX;
 using Microsoft.VisualBasic;
+using SharpDX.Direct3D;
 /*
- 已经完成：
+       -----制作相关-----------
  * 1.飞机的移动模块
  * 2.飞机的子弹发射
  * 3.中心绘制模块
@@ -29,7 +30,7 @@ using Microsoft.VisualBasic;
  * 8.飞机间碰撞
  * 9.飞机击毁特效
  * 10.飞机游戏音效【准备中】
- * 11.背景【弃置】
+ * 11.背景【准备中】
  * 12.关卡设计【准备中】
  * 13.新的飞机种类
  * 14.背景乐
@@ -39,12 +40,23 @@ using Microsoft.VisualBasic;
  * 18.开始界面
  * 19.结算界面
  * 20.新的武器类型-Light 激光
+ * 21.更换新的贴图？包装游戏？ 【准备中】
+ * 22.
+ * 23.服务器更新
+ * 24.更新内容显示
  */
 namespace Aircraft_Battle
 {
     public partial class Form1 : Form
     {
-        static public bool GameOver = false;  
+        //构造函数
+        public Form1()
+        {
+            InitializeComponent();
+        }
+
+        #region 变量
+        static public bool GameOver = false;
         static public Form1 Form;
         static public int BossID;
         static public bool DB = false;
@@ -57,13 +69,12 @@ namespace Aircraft_Battle
         /// 玩家点击开始游戏之后，启用游戏绘图器
         /// </summary>
         static public bool OnGame = true;
-        public Form1()
-        {
-            InitializeComponent();
-        }
         //static public Image screenImage;
-        SoundPlayer splayer ;
-        string GameMusic =Application.StartupPath.ToString()+"\\"+"Resources\\Sound\\1.wav";
+        /// <summary>
+        /// 背景乐播放器
+        /// </summary>
+        SoundPlayer splayer;
+        string GameMusic = Application.StartupPath.ToString() + "\\" + "Resources\\Sound\\1.wav";
         //Device dv;
         public class MP3Player
         {
@@ -108,505 +119,6 @@ namespace Aircraft_Battle
              int uReturnLength,
              int hwndCallback
             );
-        }   
-
-        public void SoundPlay(string path)
-            {
-                /*Device dv;
-                dv = new Device();
-                dv.SetCooperativeLevel(this, CooperativeLevel.Normal);
-                SecondaryBuffer buf = new SecondaryBuffer(path, dv);
-                buf.Play(0, BufferPlayFlags.TerminateByTime);
-            */
-                try
-                {
-                    Device dv = new Device();
-                    dv.SetCooperativeLevel(this, CooperativeLevel.Priority);
-                    BufferDescription buffer = new BufferDescription();
-                    buffer.GlobalFocus = true;
-                    buffer.ControlVolume = true;
-                    buffer.ControlPan = true;
-                    SecondaryBuffer buf = new SecondaryBuffer(path, buffer, dv);
-                    buf.Play(0, BufferPlayFlags.Default);
-                }
-                catch(SoundException se)
-                {
-                    MessageBox.Show(se.ToString());
-                }
-            }
-        
-        private void Form1_Load(object sender, EventArgs e)
-        {
-            
-            //GameStart();
-           /* dv = new Device();
-            dv.SetCooperativeLevel(this, CooperativeLevel.Priority);
-            SecondaryBuffer buf = new SecondaryBuffer(GameMusic, dv);
-            buf.Play(0, BufferPlayFlags.Default);
-            */
-            //splayer.SoundLocation = GameMusic;
-            //splayer.PlayLooping();
-            //dv = new Device();
-
-            
-            Form = this;
-            splayer = new SoundPlayer();
-            LoadXml();
-            
-
-            /*try
-            {
-                MP3Player mp3 = new MP3Player();  
-                //设置要播放的文件   
-                mp3.FilePath = "btn.mp3";   
-            }
-            catch(Exception se)
-            {
-                MessageBox.Show(se.ToString());
-            }*/
-            
-            GameMusic = Application.StartupPath.ToString()+"\\"+"Resources\\Sound\\1.wav";
-            if (Game.Music == true)
-            {
-                splayer.Stop();
-                splayer.SoundLocation = GameMusic;
-                splayer.PlayLooping();
-                UI.SoundImage = Image.FromFile(Application.StartupPath.ToString() + "\\"+"Resources\\UI\\soundon.png");
-            }
-            else
-            {
-                UI.SoundImage = Image.FromFile(Application.StartupPath.ToString() +"\\"+"Resources\\UI\\soundoff.png");
-                splayer.Stop();
-            }
-            //在游戏画布中创建玩家的飞机
-
-            try
-            {
-                Plane s = new Plane();
-                Random rd = new Random();
-                s.X = 400;
-                s.Y = 300;
-                s.reg = 180;
-                Player.PlaneID = 2;
-                s.Size = 32;
-                s.deviation = 8;
-                s.Scale = 3;
-                s.MoveX = 16;
-                s.MoveY = 16;
-                if (Player.MaxScore > 400)
-                {
-                    s.WeaponID = 201;
-                }
-                else
-                {
-                    s.WeaponID = 1;
-                }
-                try
-                {
-                    s.image = Image.FromFile(Application.StartupPath.ToString()+"\\"+"Resources\\Plane\\" + Player.PlaneID + ".png");
-                }
-                catch
-                {
-                }
-                PlaneFlakes.Add(s);
-            }
-            catch
-            {
-            }
-            //
-        }
-        /// <summary>
-        ///重新开始游戏，清除分数，回复HP,重置所有状态
-        /// </summary>
-        public void GameStart()
-        {
-            timer1.Enabled = true;
-            timer2.Enabled = true;
-            timer3.Enabled = true;
-            timer3.Interval = 60000;
-            timer1.Start();
-            timer2.Start();
-            timer3.Start();
-            GameCenterTimer.Enabled = true;
-            PlaneFlakes[0].hp = 3;
-            PlaneFlakes[0].maxhp = 3;
-            if (Player.MaxScore > 400)
-            {
-                PlaneFlakes[0].WeaponID = 201;
-            }
-            else
-            {
-                PlaneFlakes[0].WeaponID = 1;
-            }
-            Player.Score = 0;
-            Player.KeyIsDown[1] = false;
-            Player.KeyIsDown[2] = false;
-            Player.KeyIsDown[3] = false;
-            Player.KeyIsDown[4] = false;
-            Player.KeyIsDown[5] = false;
-            for (int bb = 0; bb < EnemyFlakes.Count; bb++)
-            {
-                EnemyFlakes[bb].X = -1;
-                EnemyFlakes[bb].Y = -1;
-            }
-            for (int i = 0; i < BulletFlakes.Count; i++)
-            {
-                if (BulletFlakes[i].ownning != 1)
-                {
-                    BulletFlakes[i].hp -= 1;
-                }
-            }
-            PlaneFlakes[0].Invincible = true;
-            Player.BoomCount = 3;
-
-            //player.Play(); //启用新线程播放
-        }
-        /// <summary>
-        /// true 则暂停游戏 false继续游戏
-        /// </summary>
-        /// <param name="b"></param>
-        public void GameStop(bool b)
-        {
-            if (b == true)
-            {
-                //游戏暂停
-                timer1.Enabled = false;
-                timer2.Enabled = false;
-                timer3.Enabled = false;
-                timer3.Stop();
-                timer2.Stop();
-                timer1.Stop();
-                if (Canves == 1)
-                {
-                    Canves = 0;
-                }
-                //GameCenterTimer.Enabled = false;
-            }
-            else
-            {
-                //游戏继续
-                timer1.Start();
-                timer2.Start();
-                timer3.Start();
-                timer1.Enabled = true;
-                timer2.Enabled = true;
-                timer3.Enabled = true;
-                if (Canves == 0)
-                {
-                    Canves = 1;
-                }
-                //GameCenterTimer.Enabled = true;
-            }
-        }
-        public void GamePaint(object sender, EventArgs e)
-        {
-            Invalidate();
-            //this.Update();
-        }
-        public void CreateEffect(int effID, float x, float y)
-        {
-            if (effID == 1)
-            {
-                Effect s = new Effect();
-                Random rd = new Random();
-                //Trace.WriteLine(x.ToString());
-                s.actID = 1;
-                s.imageID = 1;
-                s.X = x;
-                s.Y = y;
-                //s.reg = 90;
-                //s.speed = 3;
-                s.Scale = 1;
-                s.lifetime = 0;
-                s.lifemax = 25;
-                s.brushtime = 5;
-                s.size = 64;
-                s.MoveX = 32;
-                s.MoveY = 32;
-                try
-                {
-                    s.image = Image.FromFile(Application.StartupPath.ToString()+"\\"+"Resources\\Effect\\E" + effID+ "\\1.png");
-                }
-                catch (Exception Ex)
-                {
-                    //MessageBox.Show("Error:" + Ex.Message + "::Location 03", "Aircraft Battle Error Message");
-                    return;
-                }
-                EffectFlakes.Add(s);
-            }
-            if (effID == 2)
-            {
-                Effect s = new Effect();
-                Random rd = new Random();
-                //Trace.WriteLine(x.ToString());
-                s.actID = Convert.ToByte(effID);
-                s.imageID = 1;
-                s.X = x;
-                s.Y = y;
-                //s.reg = 90;
-                //s.speed = 3;
-                s.Scale = (float)1;
-                s.lifetime = 0;
-                s.lifemax = 11;
-                s.brushtime = 2;
-                s.size = 24;
-                s.MoveX = 12;
-                s.MoveY = -6;
-                try
-                {
-                    s.image = Image.FromFile(Application.StartupPath.ToString()+"\\"+"Resources\\Effect\\E" + effID + "\\1.png");
-                }
-                catch (Exception Ex)
-                {
-                    //MessageBox.Show("Error:" + Ex.Message + "::Location 03", "Aircraft Battle Error Message");
-                    return;
-                }
-                EffectFlakes.Add(s);
-            }
-        }
-        /// <summary>
-        /// 1：一架破飞机 攻击1 生命值2 射速40 弹速 快
-        /// 2：散弹 攻击力1 生命值1 射速40 弹速 慢
-        /// 3: 环形 攻击力1 生命值5 射速50 弹速 很慢 
-        /// 4: 十字 攻击力1 生命值3 射速50 弹速 很慢
-        /// 5: 自瞄？
-        /// 6: 一个BOSS？
-        /// 7: 特殊-过场特殊单位，拥有ID为2-5随机的攻击方式， 低间隔的攻击与较高的移动速度
-        /// </summary>
-        /// <param name="ID"></param>
-        public void CreateEnemy(int ID)
-        {
-            int EnemyID = ID;
-            try
-            {
-                if (ID == 1)
-                {
-                    Enemy s = new Enemy();
-                    Random rd = new Random();
-                    float x = (float)rd.Next(s.Size, this.Width - s.Size);
-                    //Trace.WriteLine(x.ToString());
-                    s.X = x;
-                    s.Y = 32;
-                    s.reg = 90;
-                    s.hp = 1;
-                    s.speed = 3;
-                    s.BulletID = 2;
-                    s.Scale = 1;
-                    s.attack = 1;
-                    s.WeaponID = 0;
-                    s.score = 1;
-                    s.BulletMoveX = -8;
-                    s.BulletMoveY = 2;
-                    try
-                    {
-                        s.image = Image.FromFile(Application.StartupPath.ToString()+"\\"+"Resources\\Enemy\\" + EnemyID + ".png");
-                    }
-                    catch (Exception Ex)
-                    {
-                        //MessageBox.Show("Error:" + Ex.Message + "::Location 03", "Aircraft Battle Error Message");
-                        return;
-                    }
-                    EnemyFlakes.Add(s);
-                }
-                if (ID == 2)
-                {
-                    Enemy s = new Enemy();
-                    Random rd = new Random();
-                    float x = (float)rd.Next(s.Size, this.Width - s.Size);
-                    //Trace.WriteLine(x.ToString());
-                    s.X = x;
-                    s.Y = 32;
-                    s.reg = 90;
-                    s.hp = 1;
-                    s.speed = 2;
-                    s.BulletID = 5;
-                    s.Scale = 1;
-                    s.attack = 1;
-                    s.WeaponID = 2;
-                    s.score = 2;
-                    try
-                    {
-                        s.image = Image.FromFile(Application.StartupPath.ToString()+"\\"+"Resources\\Enemy\\" + EnemyID + ".png");
-                    }
-                    catch (Exception Ex)
-                    {
-                        //MessageBox.Show("Error:" + Ex.Message + "::Location 03", "Aircraft Battle Error Message");
-                        return;
-                    }
-                    EnemyFlakes.Add(s);
-                }
-                if (ID == 3)
-                {
-                    Enemy s = new Enemy();
-                    Random rd = new Random();
-                    float x = (float)rd.Next(s.Size, this.Width - s.Size);
-                    //Trace.WriteLine(x.ToString());
-                    s.X = x;
-                    s.Y = 32;
-                    s.reg = 90;
-                    s.hp = 5;
-                    s.speed = (float)0.75;
-                    s.BulletID = 5;
-                    s.Scale = 1;
-                    s.attack = 1;
-                    s.WeaponID = 3;
-                    s.score = 5;
-                    s.Attack_interval = 50;
-                    try
-                    {
-                        s.image = Image.FromFile(Application.StartupPath.ToString()+"\\"+"Resources\\Enemy\\" + EnemyID + ".png");
-                    }
-                    catch (Exception Ex)
-                    {
-                        //MessageBox.Show("Error:" + Ex.Message + "::Location 03", "Aircraft Battle Error Message");
-                        return;
-                    }
-                    EnemyFlakes.Add(s);
-                } 
-                if (ID == 4)
-                {
-                    Enemy s = new Enemy();
-                    Random rd = new Random();
-                    float x = (float)rd.Next(s.Size, this.Width - s.Size);
-                    //Trace.WriteLine(x.ToString());
-                    s.X = x;
-                    s.Y = 32;
-                    s.reg = 90;
-                    s.hp = 3;
-                    s.speed = (float)1.5;
-                    s.BulletID = 5;
-                    s.Scale = 1;
-                    s.attack = 1;
-                    s.WeaponID = 4;
-                    s.score = 3;
-                    s.Attack_interval = 50;
-                    try
-                    {
-                        s.image = Image.FromFile(Application.StartupPath.ToString()+"\\"+"Resources\\Enemy\\" + EnemyID + ".png");
-                    }
-                    catch (Exception Ex)
-                    {
-                        //MessageBox.Show("Error:" + Ex.Message + "::Location 03", "Aircraft Battle Error Message");
-                        return;
-                    }
-                    EnemyFlakes.Add(s);
-                }
-                if (ID == 5)
-                {
-                    Enemy s = new Enemy();
-                    Random rd = new Random();
-                    float x = (float)rd.Next(s.Size, this.Width - s.Size);
-                    //Trace.WriteLine(x.ToString());
-                    s.X = x;
-                    s.Y = 32;
-                    s.reg = 90;
-                    s.hp = 1;
-                    s.speed = (float)3;
-                    s.BulletID = 5;
-                    s.Scale = 1;
-                    s.attack = 1;
-                    s.WeaponID =5;
-                    s.score = 2;
-                    s.Attack_interval = 30;
-                    try
-                    {
-                        s.image = Image.FromFile(Application.StartupPath.ToString()+"\\"+"Resources\\Enemy\\" + EnemyID + ".png");
-                    }
-                    catch (Exception Ex)
-                    {
-                        //MessageBox.Show("Error:" + Ex.Message + "::Location 03", "Aircraft Battle Error Message");
-                        return;
-                    }
-                    EnemyFlakes.Add(s);
-                }
-                if (ID == 6)
-                {
-                    DB = true;
-
-                    Enemy s = new Enemy();
-                    Random rd = new Random();
-                    float x = (float)this.Width / 2;
-                    //Trace.WriteLine(x.ToString());
-                    s.X = x;
-                    s.Y = 32;
-                    s.reg = 90;
-                    s.hp = 150;
-                    s.maxhp = 150;
-                    s.speed = (float)0.5;
-                    s.BulletID = 2;
-                    s.Scale = 1;
-                    s.attack = 1;
-                    s.WeaponID = 100;
-                    s.score = 2;
-                    s.Attack_interval = 300;
-                    s.IsBoss = true;
-                    s.AI_Count = 100;
-                    try
-                    {
-                        s.image = Image.FromFile(Application.StartupPath.ToString()+"\\"+"Resources\\Enemy\\" + EnemyID + ".png");
-                    }
-                    catch (Exception Ex)
-                    {
-                        //MessageBox.Show("Error:" + Ex.Message + "::Location 03", "Aircraft Battle Error Message");
-                        return;
-                    }
-                    EnemyFlakes.Add(s);
-                    for (int i = 0; i < EnemyFlakes.Count; i++)
-                    {
-                        if (EnemyFlakes[i].IsBoss == true)
-                        {
-                            BossID = i;
-                            break;
-                        }
-                    }
-                    Thread theader = new Thread(new ThreadStart(new Action(() =>
-                    {
-                        Thread.Sleep(5000);
-                        s.speed = 0;
-                    })));
-                    theader.Start();
-
-                }
-                if (ID == 7)
-                {
-                    Enemy s = new Enemy();
-                    Random rd = new Random(Convert.ToInt32(new Guid().GetHashCode()));
-                    float x = (float)(this.Width - 50);
-                    //Trace.WriteLine(x.ToString());
-                    s.X = x;
-                    s.Y = 64;
-                    s.reg = 180;
-                    s.hp = 2;
-                    s.maxhp = 2;
-                    s.speed = (float)15;
-                    s.BulletID = 5;
-                    s.Scale = 1;
-                    s.attack = 1;
-                    s.WeaponID = (int)rand.Next(2,6);
-                    rd = new Random(Convert.ToInt32(new Guid().GetHashCode()));
-                    s.Weapon2 = rd.Next(4, 10); ;
-                    s.score = 2;
-                    rd = new Random(Convert.ToInt32(new Guid().GetHashCode()));
-                    s.Attack_interval =rd.Next(4,10);
-                    try
-                    {
-                        s.image = Image.FromFile(Application.StartupPath.ToString()+"\\"+"Resources\\Enemy\\7.png");
-                    }
-                    catch (Exception Ex)
-                    {
-                        //MessageBox.Show("Error:" + Ex.Message + "::Location 03", "Aircraft Battle Error Message");
-                        return;
-                    }
-                    EnemyFlakes.Add(s);
-
-                }
-            }
-            catch (Exception Ex)
-            {
-                //MessageBox.Show("Error02:" + Ex.Message + "::Location 04", "Aircraft Battle Error Message");
-                return;
-            }
-
         }
         /// <summary>
         /// 公共随机数发生器
@@ -634,17 +146,19 @@ namespace Aircraft_Battle
         static public readonly List<Light> LightFlakes = new List<Light>();
         static public readonly List<LightII> LightIIFlakes = new List<LightII>();
         static public int Tick = 0;
-
+        /// <summary>
+        /// UI路径类
+        /// </summary>
         static public class UI
-        { 
+        {
             /// <summary>
             /// 血条
             /// </summary>
-            static public Image hpimage = Image.FromFile(Application.StartupPath.ToString()+"\\"+"Resources\\UI\\hpbar.png");
+            static public Image hpimage = Image.FromFile(Application.StartupPath.ToString() + "\\" + "Resources\\UI\\hpbar.png");
             /// <summary>
             /// 血条框
             /// </summary>
-            static public Image hpimage2 = Image.FromFile(Application.StartupPath.ToString()+"\\"+"Resources\\UI\\hp.png");
+            static public Image hpimage2 = Image.FromFile(Application.StartupPath.ToString() + "\\" + "Resources\\UI\\hp.png");
             /// <summary>
             /// 设置菜单
             /// </summary>
@@ -652,19 +166,21 @@ namespace Aircraft_Battle
             /// <summary>
             /// 炸弹贴图
             /// </summary>
-            static public Image Boom = Image.FromFile(Application.StartupPath.ToString()+"\\"+"Resources\\UI\\boom.png");
+            static public Image Boom = Image.FromFile(Application.StartupPath.ToString() + "\\" + "Resources\\UI\\boom.png");
             /// <summary>
             /// 背景贴图
             /// </summary>
-            static public Image BG = Image.FromFile(Application.StartupPath.ToString()+"\\"+"Resources\\UI\\backGround.png");
-            static public Image BackG = Image.FromFile(Application.StartupPath.ToString()+"\\"+"Resources\\UI\\bg.png");
-            static public Image PlayBtn = Image.FromFile(Application.StartupPath.ToString()+"\\"+"Resources\\UI\\btn_play_2.png");
-            static public string PlayBtnPath = Application.StartupPath.ToString()+"\\"+"Resources\\UI\\btn_play_2.png";
-            static public Image ShopBtn = Image.FromFile(Application.StartupPath.ToString()+"\\"+"Resources\\UI\\otherBtn_2.png");
-            static public string ShopBtnPath = Application.StartupPath.ToString()+"\\"+"Resources\\UI\\otherBtn_2.png";
-            static public Image SoundImage = Image.FromFile(Application.StartupPath.ToString()+"\\"+"Resources\\UI\\soundoff.png");
-            static public Image Stop = Image.FromFile(Application.StartupPath.ToString()+"\\"+"Resources\\UI\\Stop.png");
-            static public Image Mouse = Image.FromFile(Application.StartupPath.ToString()+"\\"+"Resources\\UI\\mouseon.png");
+            static public Image BG = Image.FromFile(Application.StartupPath.ToString() + "\\" + "Resources\\UI\\backGround.png");
+            static public Image gold = Image.FromFile(Application.StartupPath.ToString() + "\\" + "Resources\\UI\\gold.png");
+            static public Image Score = Image.FromFile(Application.StartupPath.ToString() + "\\" + "Resources\\UI\\Score.png");
+            static public Image BackG = Image.FromFile(Application.StartupPath.ToString() + "\\" + "Resources\\UI\\bg.png");
+            static public Image PlayBtn = Image.FromFile(Application.StartupPath.ToString() + "\\" + "Resources\\UI\\btn_play_2.png");
+            static public string PlayBtnPath = Application.StartupPath.ToString() + "\\" + "Resources\\UI\\btn_play_2.png";
+            static public Image ShopBtn = Image.FromFile(Application.StartupPath.ToString() + "\\" + "Resources\\UI\\otherBtn_2.png");
+            static public string ShopBtnPath = Application.StartupPath.ToString() + "\\" + "Resources\\UI\\otherBtn_2.png";
+            static public Image SoundImage = Image.FromFile(Application.StartupPath.ToString() + "\\" + "Resources\\UI\\soundoff.png");
+            static public Image Stop = Image.FromFile(Application.StartupPath.ToString() + "\\" + "Resources\\UI\\Stop.png");
+            static public Image Mouse = Image.FromFile(Application.StartupPath.ToString() + "\\" + "Resources\\UI\\mouseon.png");
             static public float BGX = 0;
             static public float BGY = 0;
             static public float BGY2 = 600;
@@ -675,7 +191,7 @@ namespace Aircraft_Battle
         public class Plane
         {
             //改用speed+reg 方式计算位置
-            public float Rotation=0;
+            public float Rotation = 0;
             public float RotVelocity;
             public float Scale;//大小
             public float X;
@@ -700,6 +216,7 @@ namespace Aircraft_Battle
             public float MoveY = 10;//偏移Y
             public float BulletMoveX = 10;//子弹偏移
             public float BulletMoveY = 10;//子弹偏移
+            public float ImageMoveCount = 0;
         }
         /// <summary>
         /// 飞机的子弹对象
@@ -713,12 +230,12 @@ namespace Aircraft_Battle
             public float X;
             public float Y;
             public Image image;//子弹贴图
-            public double reg=90;//角度
+            public double reg = 90;//角度
             public Color cor;
-            public byte Mode=1;//动画模式
-            public short Size=20;//碰撞范围 圆形
+            public byte Mode = 1;//动画模式
+            public short Size = 20;//碰撞范围 圆形
             public float speed = 25;//子弹速度
-            public int damage=1;//子弹伤害
+            public int damage = 1;//子弹伤害
             /// <summary>
             /// 0为敌人的子弹，1为玩家的子弹，默认为0
             /// </summary>
@@ -746,7 +263,7 @@ namespace Aircraft_Battle
             public Color cor;
             public byte Mode;//动画模式
             public short Size = 44;//碰撞范围 圆形
-            public int hp ;//= 3;//生命值
+            public int hp;//= 3;//生命值
             public int maxhp = 3;//最大生命值
             public int shield;//护盾
             public int attack = 1;// = 1;//攻击力
@@ -850,7 +367,7 @@ namespace Aircraft_Battle
             public Color cor;
             public byte Mode = 1;//动画模式
             public short Size = 5;//粗细
-            public int damage = 1;//激光伤害伤害
+            public int damage = 1;//激光伤害
             /// <summary>
             /// 0为敌人的子弹，1为玩家的子弹，默认为0
             /// </summary>
@@ -866,6 +383,9 @@ namespace Aircraft_Battle
             public int hurttime = 10;
             public int unitid = 0;
         }
+        /// <summary>
+        /// 玩家类
+        /// </summary>
         static public class Player
         {
             static public int lv = 1;
@@ -873,7 +393,7 @@ namespace Aircraft_Battle
             /// <summary>
             /// 1:Up 2:Left 3:Down 4:Right
             /// </summary>
-            static public bool []KeyIsDown = new bool[6];
+            static public bool[] KeyIsDown = new bool[6];
             static public int Score = 0;
             static public int BoomCount = 3;
             static public int Exp = 0;
@@ -893,675 +413,465 @@ namespace Aircraft_Battle
 
         }
         public bool P = true;
-        
-        private void Form1_Paint(object sender, PaintEventArgs e)
-        {
-            BufferedGraphicsContext currentContext = BufferedGraphicsManager.Current;
-            BufferedGraphics myBuffer = currentContext.Allocate(e.Graphics, e.ClipRectangle);
-            Graphics g = myBuffer.Graphics;
-            g.Clear(Color.Transparent);
-            g.SmoothingMode = SmoothingMode.HighSpeed;
+        private int EnCount = 0;
+        #endregion
 
-            if (Canves == 0)
+        //Other
+        /// <summary>
+        /// 播放一个波形 -DirectSound
+        /// </summary>
+        /// <param name="path"></param>
+        public void SoundPlay(string path)
             {
-                // 不好用的画背景
-                //*仅在暂停时播放背景
-                UI.BGY++;
-                if (UI.BGY >= 600)
+                if(Game.Music)
+                try
                 {
-                    UI.BGY = 0;
+                    Device dv = new Device();
+                    dv.SetCooperativeLevel(this, CooperativeLevel.Priority);
+                    BufferDescription buffer = new BufferDescription();
+                    buffer.GlobalFocus = true;
+                    buffer.ControlVolume = true;
+                    buffer.ControlPan = true;
+                    SecondaryBuffer buf = new SecondaryBuffer(path, buffer, dv);
+                    buf.Play(0, BufferPlayFlags.Default);
                 }
-                g.ResetTransform();
-                g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan
-                g.ScaleTransform(1, (float)1, MatrixOrder.Append); //scale
-                g.TranslateTransform(UI.BGX, UI.BGY, MatrixOrder.Append); //pan
-                g.DrawImage(UI.BG, 0, 0); //draw
-                /*UI.BGY2--;
-                if (UI.BGY2 <=600)
+                catch(SoundException se)
                 {
-                    UI.BGY2 = 1200;
-                }*/
-                g.ResetTransform();
-                g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan
-                g.ScaleTransform(1, (float)1, MatrixOrder.Append); //scale
-                g.TranslateTransform(0, -600 + UI.BGY, MatrixOrder.Append); //pan
-                g.DrawImage(UI.BG, 0, 0); //draw
+                    MessageBox.Show(se.ToString());
+                }
             }
-            
-            
-            if (Canves == 1)
+        /// <summary>
+        ///重新开始游戏，清除分数，回复HP,重置所有状态 移除所有对象
+        /// </summary>
+        public void GameStart()
+        {
+            timer1.Enabled = true;
+            timer2.Enabled = true;
+            timer3.Enabled = true;
+            timer3.Interval = 60000;
+            timer1.Start();
+            timer2.Start();
+            timer3.Start();
+            GameCenterTimer.Enabled = true;
+            PlaneFlakes[0].hp = 3;
+            PlaneFlakes[0].maxhp = 3;
+            if (Player.MaxScore > 400)
             {
-                //绘制玩家的飞机
-                for (int ii = 0; ii < PlaneFlakes.Count; ii++)
+                PlaneFlakes[0].WeaponID = 201;
+            }
+            else
+            {
+                PlaneFlakes[0].WeaponID = 1;
+            }
+            Player.Score = 0;
+            Player.KeyIsDown[1] = false;
+            Player.KeyIsDown[2] = false;
+            Player.KeyIsDown[3] = false;
+            Player.KeyIsDown[4] = false;
+            Player.KeyIsDown[5] = false;
+            for (int bb = 0; bb < EnemyFlakes.Count; bb++)
+            {
+                EnemyFlakes[bb].X = -32;
+                EnemyFlakes[bb].Y = -32;
+            }
+            for (int i = 0; i < BulletFlakes.Count; i++)
+            {
+                if (BulletFlakes[i].ownning != 1)
                 {
-                    Plane ss1 = PlaneFlakes[ii];
-                    if (Game.UseMouse == true)
-                    {
-                        PlaneFlakes[0].reg = Atan2ForCoordinate(PlaneFlakes[0].X, PlaneFlakes[0].Y, Game.MouseX, Game.MouseY);
-                        if (GetDistance(PlaneFlakes[0].X, PlaneFlakes[0].Y, Game.MouseX, Game.MouseY) > 10)
-                        {
-                            if (Player.KeyIsDown[5] == false)
-                            {
-                                PlaneFlakes[0].speed = 10;
-                            }
-                            else
-                            {
-                                PlaneFlakes[0].speed = 5;
-                            }
-                        }
-                        else
-                        {
-                            PlaneFlakes[0].speed = GetDistance(PlaneFlakes[0].X, PlaneFlakes[0].Y, Game.MouseX, Game.MouseY);
-                        }
-                    }
-                    if (!((float)ss1.X + (float)Math.Cos(ss1.reg / 180 * Math.PI) * ss1.speed > this.Width - ss1.Size
-                        || (float)ss1.Y + (float)Math.Sin(ss1.reg / 180 * Math.PI) * ss1.speed > this.Height - ss1.Size
-                        || (float)ss1.X + (float)Math.Cos(ss1.reg / 180 * Math.PI) * ss1.speed < 0
-                        || (float)ss1.Y + (float)Math.Sin(ss1.reg / 180 * Math.PI) * ss1.speed < 0))
-                    {
-                        ss1.X = (float)ss1.X + (float)Math.Cos(ss1.reg / 180 * Math.PI) * ss1.speed;
-                        ss1.Y = (float)ss1.Y + (float)Math.Sin(ss1.reg / 180 * Math.PI) * ss1.speed;
-                    }
-                    for (int bb = 0; bb < EnemyFlakes.Count; bb++)
-                    {
-                        //碰撞判断
-                        float X = EnemyFlakes[bb].X + EnemyFlakes[bb].Size / 2;
-                        float Y = EnemyFlakes[bb].Y + EnemyFlakes[bb].Size / 2;
-                        float Size = EnemyFlakes[bb].Size;
-                        //玩家的子弹
-                        //Trace.WriteLine(GetDistance(GetDistance(a1.X + a1.Size / 2, a1.Y + a1.Size / 2, X - Size / 2, Y - Size / 2));
-                        if (GetDistance(ss1.X + (ss1.Size / 2), ss1.Y + (ss1.Size / 2), X /*+ (Size / 2)*/, Y /*+ (Size / 2)*/) <= ss1.deviation + EnemyFlakes[bb].deviation)
-                        {
-                            if (ss1.Invincible == false)
-                            {
-                                ss1.hp--;
-                                EnemyFlakes[bb].hp -= 5;
-                            }
-                        }
-
-                    }
-                    if (ss1.hp <= 0)
-                    {
-                        //游戏结束
-                        /*ss1.Scale = 1f;
-                        PlaneFlakes.RemoveAt(ii);*/
-                        //画字----------------------
-                        g.ResetTransform();
-                        g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan                    
-                        g.TranslateTransform(0, 100, MatrixOrder.Append); //pan
-                        Font font = new Font("微软雅黑", 72);
-                        Brush brush = new SolidBrush(Color.White);
-                        e.Graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.SingleBitPerPixel;
-                        g.DrawString("Game Over", font, brush, PointF.Empty);
-                        //-----------------------
-                        //画字----------------------
-                        g.ResetTransform();
-                        g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan
-                        font = new Font("微软雅黑", 50);
-                        g.TranslateTransform(0, 200, MatrixOrder.Append); //pan
-                        e.Graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.SingleBitPerPixel;
-                        g.DrawString("按下空格键回到开始界面", font, brush, PointF.Empty);
-                        //-----------------------
-                        //画字----------------------
-                        g.ResetTransform();
-                        g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan                    
-                        g.TranslateTransform(0, 300, MatrixOrder.Append); //pan
-                        font = new Font("微软雅黑", 60);
-                        brush = new SolidBrush(Color.White);
-                        e.Graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.SingleBitPerPixel;
-                        g.DrawString("你的得分为：" + Player.Score.ToString(), font, brush, PointF.Empty);
-                        //-----------------------
-                        GameCenterTimer.Enabled = false;
-                        timer1.Enabled = false;
-                        timer2.Enabled = false;
-                        timer3.Enabled = false;
-                        timer3.Stop();
-                        timer2.Stop();
-                        timer1.Stop();
-                        //MessageBox.Show("Game Over,你的得分为：" + Player.Score.ToString() + "点击确定后，按下空格键继续");
-                        GameOver = true;
-                        //记录最高分数据
-                        if (Player.Score > Player.MaxScore)
-                        {
-                            Player.MaxScore = Player.Score;
-                            WriteXML();//存档
-                        }
-                        
-                    }
-                    else
-                    {
-                        //绘制画面图像
-                        g.ResetTransform();
-                        g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan
-                        g.ScaleTransform(ss1.Scale, ss1.Scale, MatrixOrder.Append); //scale
-                        g.RotateTransform(ss1.Rotation, MatrixOrder.Append); //rotate
-                        g.TranslateTransform(ss1.X, ss1.Y, MatrixOrder.Append); //pan
-                        g.DrawImage(ss1.image, ss1.MoveX, ss1.MoveY); //draw
-                    }
-                    if (ss1.AI_Count == ss1.Attack_interval)
-                    {
-                        //发射子弹
-                        ss1.AI_Count = 0;
-                        Weapon(ss1.WeaponID, ss1.X, ss1.Y, ss1.Size, ss1.attack, ss1.BulletID);
-
-                    }
-                    else
-                    {
-                        //计数增加
-                        ss1.AI_Count++;
-                    }
+                    BulletFlakes[i].hp -= 1;
                 }
+            }
+            PlaneFlakes[0].Invincible = true;
+            Player.BoomCount = 3;
 
-                //绘制敌人的飞机
-                for (int ii = 0; ii < EnemyFlakes.Count; ii++)
+            //player.Play(); //启用新线程播放
+        }
+        /// <summary>
+        /// true 则暂停游戏 false继续游戏
+        /// </summary>
+        /// <param name="b"></param>
+        public void GameStop(bool b)
+        {
+            if (b == true)
+            {
+                //游戏暂停
+                timer1.Enabled = false;
+                timer2.Enabled = false;
+                timer3.Enabled = false;
+                timer3.Stop();
+                timer2.Stop();
+                timer1.Stop();
+                if (Canves == 1)
                 {
-                    Enemy ss1 = EnemyFlakes[ii];
-                    /*if (ss1.IsBoss == true)
-                    {
-                        BossID = ii;
-                    }*/
-                    ss1.X = (float)ss1.X + (float)Math.Cos(ss1.reg / 180 * Math.PI) * ss1.speed;
-                    ss1.Y = (float)ss1.Y + (float)Math.Sin(ss1.reg / 180 * Math.PI) * ss1.speed;
-                    if (ss1.hp <= 0 || (ss1.X > this.Width || ss1.Y > this.Height || ss1.X < 0 || ss1.Y < 0))
-                    {
-                        //单位被摧毁
-                        CreateEffect(1, ss1.X, ss1.Y);
-                        if (ss1.IsBoss == true)
-                        {
-                            DB = false;
-                            PlaneFlakes[0].hp++;
-                            PlaneFlakes[0].maxhp++;
-                            Player.BoomCount++;
-                            Player.Score += 25;
-                            timer1.Enabled = true;
-                            timer2.Enabled = true;
-                            GameMusic = Application.StartupPath.ToString()+"\\"+"Resources\\Sound\\1.wav";
-                            if (Game.Music == true)
-                            {
-                                splayer.Stop();
-                                splayer.SoundLocation = GameMusic;
-                                splayer.PlayLooping();
-                            }
-                            timer3.Enabled = true;
-                            timer3.Interval = 120000;
-                            timer3.Start();
-                        }
-                        ss1.Scale = 1f;
-                        ss1.image = null;
-                        EnemyFlakes.RemoveAt(ii);
-                        Player.Score += ss1.score;
-                        ss1.AI_Count = 0;
-                    }
-                    else
-                    {
-                        //绘制画面图像
-                        g.ResetTransform();
-                        g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan
-                        g.ScaleTransform(ss1.Scale, ss1.Scale, MatrixOrder.Append); //scale
-                        g.RotateTransform(ss1.Rotation, MatrixOrder.Append); //rotate
-                        g.TranslateTransform(ss1.X - ss1.Size / 2, ss1.Y - ss1.Size / 2, MatrixOrder.Append); //pan
-                        g.DrawImage(ss1.image, 0, 0); //draw
-                    }
-                    if (ss1.AI_Count % ss1.Attack_interval ==0 && ss1.hp > 0)
-                    {
-                        //发射子弹
-                        
-                        Weapon(ss1.WeaponID, ss1.X + ss1.BulletMoveX, ss1.Y + ss1.BulletMoveY, 0, ss1.attack, ss1.BulletID);
-                        Weapon(ss1.Weapon2, ss1.X + ss1.BulletMoveX, ss1.Y + ss1.BulletMoveY, 0, ss1.attack, ss1.BulletID);
-                    }
-                    
-                        //计数增加
-                        ss1.AI_Count++;
-                    
+                    Canves = 0;
                 }
-                //绘制激光
-                for (int ii = 0; ii < LightFlakes.Count; ii++)
+                //GameCenterTimer.Enabled = false;
+            }
+            else
+            {
+                //游戏继续
+                timer1.Start();
+                timer2.Start();
+                timer3.Start();
+                timer1.Enabled = true;
+                timer2.Enabled = true;
+                timer3.Enabled = true;
+                if (Canves == 0)
                 {
-                    Light a1 = LightFlakes[ii];
-                    //移动
-                    if (a1.ownning == 1)
-                    {
-                        a1.X = PlaneFlakes[0].X + (float)PlaneFlakes[0].Size / 2;
-                        a1.Y = PlaneFlakes[0].Y + (float)PlaneFlakes[0].Size / 2;
-                    }
-
-                    //伤害
-                    a1.count++;
-                    if (a1.count % a1.hurttime == 0 && a1.count != 0)
-                    {
-                        //a1.count = 0;
-                        for (int bb = 0; bb < EnemyFlakes.Count; bb++)
-                        {
-                            //碰撞判断
-                            float X = EnemyFlakes[bb].X + EnemyFlakes[bb].Size / 2;
-                            float Y = EnemyFlakes[bb].Y + EnemyFlakes[bb].Size / 2;
-                            float Size = EnemyFlakes[bb].Size;
-
-                            if (X > a1.X && X < a1.X + a1.Size && Y < a1.Y)
-                            {
-                                CreateEffect(2, EnemyFlakes[bb].X, EnemyFlakes[bb].Y);
-                                EnemyFlakes[bb].hp -= a1.damage;
-                            }
-                        }
-                    }
-                    //刷新动画
-                    if (a1.count % a1.brushtime == 0)
-                    {
-                        a1.imageID++;
-                        if (a1.imageID > a1.imgcount)
-                        {
-                            a1.imageID = 1;
-                        }
-                        a1.image = Image.FromFile(Application.StartupPath.ToString()+"\\"+"Resources\\Light\\" + a1.id + "\\" + a1.imageID + ".png");
-                    }
-                    a1.life++;
-                    if (a1.life > a1.lifemax)
-                    {
-                        //移除
-                        a1.count = 0;
-                        LightFlakes.Remove(a1);
-                    }
-                    else
-                    {
-                        //绘制特效图像
-                        g.ResetTransform();
-                        g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan
-                        g.ScaleTransform(a1.Scale, a1.Scale, MatrixOrder.Append); //scale
-                        g.RotateTransform(a1.Rotation, MatrixOrder.Append); //rotate
-                        g.TranslateTransform(a1.X - ((a1.MoveX) * a1.Scale), a1.Y - ((a1.MoveY) * a1.Scale), MatrixOrder.Append); //pan
-                        g.DrawImage(a1.image, 0, 0); //draw
-                    }
-
+                    Canves = 1;
                 }
-                //绘制子弹
-
-                for (int ii = 0; ii < BulletFlakes.Count; ii++)
+                //GameCenterTimer.Enabled = true;
+            }
+        }
+        public void GamePaint(object sender, EventArgs e)
+        {
+            Invalidate();
+        }
+        /// <summary>
+        /// 创建特效
+        /// </summary>
+        /// <param name="effID">特效ID</param>
+        /// <param name="x">X</param>
+        /// <param name="y">Y</param>
+        public void CreateEffect(int effID, float x, float y)
+        {
+            if (effID == 1)
+            {
+                Effect s = new Effect();
+                Random rd = new Random();
+                //Trace.WriteLine(x.ToString());
+                s.actID = 1;
+                s.imageID = 1;
+                s.X = x;
+                s.Y = y;
+                //s.reg = 90;
+                //s.speed = 3;
+                s.Scale = 1;
+                s.lifetime = 0;
+                s.lifemax = 25;
+                s.brushtime = 5;
+                s.size = 64;
+                s.MoveX = 32;
+                s.MoveY = 32;
+                try
                 {
-                    Bullet a1 = BulletFlakes[ii];
-                    if (a1.ownning == 0) 
-                    {
-                        Random rd = new Random(Convert.ToInt32(Guid.NewGuid().GetHashCode()));
-                        //int it = rd.Next(0, 1);
-                        if (a1.speedup == true)
-                        {
-                            a1.speed += a1.upspeed;
-                        }
-                    }
-                    a1.X = (float)a1.X + (float)Math.Cos(a1.reg / 180 * Math.PI) * a1.speed;
-                    a1.Y = (float)a1.Y + (float)Math.Sin(a1.reg / 180 * Math.PI) * a1.speed;
-                    //碰撞判断
-                    if (a1.Scale > 1)
-                    {
-                        a1.Scale -= (float)0.5;
-                    }
-                    else
-                    {
-                        a1.Scale = (float)1;
-                    }
-                    float PlayerX = PlaneFlakes[0].X + PlaneFlakes[0].Size / 2;
-                    float PlayerY = PlaneFlakes[0].Y + PlaneFlakes[0].Size / 2;
-                    float PlayerSize = PlaneFlakes[0].Size;
-                    if (a1.ownning == 0)
-                    {
-                        //敌人的子弹
-                        //Trace.WriteLine(GetDistance(a1.X + (a1.Size / 2), a1.Y + (a1.Size / 2), (PlayerX + PlayerSize / 2), (PlayerY + PlayerSize / 2)));
-                        if (GetDistance(a1.X + (a1.Size / 2), a1.Y + (a1.Size / 2), (PlayerX /*+ PlayerSize / 2*/), (PlayerY /*+ PlayerSize / 2*/)) <= a1.deviation + PlaneFlakes[0].deviation)
-                        {
-                            //子弹命中
-                            //Trace.WriteLine("敌人的子弹命中");
-                            if (PlaneFlakes[0].Invincible == false)
-                            {
-                                CreateEffect(2, PlaneFlakes[0].X + PlaneFlakes[0].Size / 2, PlaneFlakes[0].Y);
-                                PlaneFlakes[0].hp -= a1.damage;
-                                PlaneFlakes[0].Invincible = true;
-                                a1.X = -1;
-                                a1.Y = -1;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        //玩家的子弹
-                        for (int bb = 0; bb < EnemyFlakes.Count; bb++)
-                        {
-                            //碰撞判断
-                            float X = EnemyFlakes[bb].X + EnemyFlakes[bb].Size / 2;
-                            float Y = EnemyFlakes[bb].Y + EnemyFlakes[bb].Size / 2;
-                            float Size = EnemyFlakes[bb].Size;
-                            //玩家的子弹
-                            //Trace.WriteLine(GetDistance(GetDistance(a1.X + a1.Size / 2, a1.Y + a1.Size / 2, X - Size / 2, Y - Size / 2));
-                            if (GetDistance(a1.X + (a1.Size / 2), a1.Y + (a1.Size / 2), X /*+ (Size / 2)*/, Y /*+ (Size / 2)*/) <= a1.deviation + EnemyFlakes[bb].deviation)
-                            {
-                                //子弹命中
-                                //Trace.WriteLine("玩家的子弹命中");
-                                CreateEffect(2, EnemyFlakes[bb].X, EnemyFlakes[bb].Y);
-                                EnemyFlakes[bb].hp -= a1.damage;
-                                a1.X = -1;
-                                a1.Y = -1;
-                            }
-
-                        }
-                    }
-                    if (a1.X > this.Width || a1.Y > this.Height || a1.X < 0 || a1.Y < 0 || a1.hp < 1)
-                    {
-                        //离开画面，清除
-                        a1.Scale = 1f;
-                        a1.image = null;
-                        BulletFlakes.RemoveAt(ii);
-                    }
-                    else
-                    {
-                        //绘制图像
-                        g.ResetTransform();
-                        g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan
-                        g.ScaleTransform(a1.Scale, a1.Scale, MatrixOrder.Append); //scale
-                        g.RotateTransform(a1.Rotation, MatrixOrder.Append); //rotate
-                        g.TranslateTransform(a1.X + a1.Size / 2, a1.Y + a1.Size / 2, MatrixOrder.Append); //pan
-                        g.DrawImage(a1.image, 0, 0); //draw
-                    }
+                    s.image = Image.FromFile(Application.StartupPath.ToString()+"\\"+"Resources\\Effect\\E" + effID+ "\\1.png");
                 }
-                
-                //绘制特效
-                for (int ii = 0; ii < EffectFlakes.Count; ii++)
+                catch (Exception Ex)
                 {
-                    Effect ss1 = EffectFlakes[ii];
-                    if (ss1.Mode == 1)
-                    {
-                        //ss1.X += ss1.XVelocity;
-                        //ss1.Y += ss1.YVelocity;
-                        //ss1.Rotation += ss1.RotVelocity;
-                        //ss1.XVelocity += ((float)rand.NextDouble() - 0.5f) * 0.7f;
-                        //ss1.XVelocity = Math.Max(ss1.XVelocity, -2f);
-                        //ss1.XVelocity = Math.Min(ss1.XVelocity, +2f);
-                        ss1.lifetime++;
-                        if (ss1.lifetime % ss1.brushtime == 0)
-                        {
-                            ss1.imageID++;
-                            ss1.image = Image.FromFile(Application.StartupPath.ToString()+"\\"+"Resources\\Effect\\E" + ss1.actID + "\\" + ss1.imageID + ".png");
-
-                        }
-                        if (ss1.Y > this.Height || ss1.lifetime >= ss1.lifemax || ss1.X > this.Width)
-                        {
-                            //ss1.X = 1f;
-                            ss1.XVelocity = 0f;
-                            ss1.YVelocity = 0f;
-                            ss1.lifetime = 0;
-                            ss1.Scale = 1f;
-                            EffectFlakes.RemoveAt(ii);
-                        }
-                        else
-                        {
-                            //绘制特效图像
-                            g.ResetTransform();
-                            g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan
-                            g.ScaleTransform(ss1.Scale, ss1.Scale, MatrixOrder.Append); //scale
-                            g.RotateTransform(ss1.Rotation, MatrixOrder.Append); //rotate
-                            g.TranslateTransform(ss1.X - ((ss1.MoveX) * ss1.Scale), ss1.Y - ((ss1.MoveY) * ss1.Scale), MatrixOrder.Append); //pan
-                            g.DrawImage(ss1.image, 0, 0); //draw
-                        }
-                    }
+                    //MessageBox.Show("Error:" + Ex.Message + "::Location 03", "Aircraft Battle Error Message");
+                    return;
                 }
-                //绘制UI
+                EffectFlakes.Add(s);
+            }
+            if (effID == 2)
+            {
+                Effect s = new Effect();
+                Random rd = new Random();
+                //Trace.WriteLine(x.ToString());
+                s.actID = Convert.ToByte(effID);
+                s.imageID = 1;
+                s.X = x;
+                s.Y = y;
+                //s.reg = 90;
+                //s.speed = 3;
+                s.Scale = (float)1;
+                s.lifetime = 0;
+                s.lifemax = 11;
+                s.brushtime = 2;
+                s.size = 24;
+                s.MoveX = 12;
+                s.MoveY = -6;
+                try
                 {
-                    //绘制音量图标
-                    g.ResetTransform();
-                    g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan
-                    g.ScaleTransform((float)0.5, (float)0.5, MatrixOrder.Append); //scale
-                    g.TranslateTransform(730, 15, MatrixOrder.Append); //pan
-                    g.DrawImage(UI.SoundImage, 0, 0); //draw
-                    //绘制暂停图标
-                    g.ResetTransform();
-                    g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan
-                    g.ScaleTransform((float)1.5, (float)1.5, MatrixOrder.Append); //scale
-                    g.TranslateTransform(715, 38, MatrixOrder.Append); //pan
-                    g.DrawImage(UI.Stop, 0, 0); //draw
-                    //绘制鼠标图标
-                    g.ResetTransform();
-                    g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan
-                    g.ScaleTransform((float)0.5, (float)0.5, MatrixOrder.Append); //scale
-                    g.TranslateTransform(670, 20, MatrixOrder.Append); //pan
-                    g.DrawImage(UI.Mouse, 0, 0); //draw
-                    //画框
-                    g.ResetTransform();
-                    g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan
-                    g.ScaleTransform(1, (float)1.1, MatrixOrder.Append); //scale
-                    g.TranslateTransform(4, 5, MatrixOrder.Append); //pan
-                    g.DrawImage(UI.hpimage2, 0, 0); //draw
-                    //画条
-                    if (PlaneFlakes[0].hp > 0)
-                    {
-                        g.ResetTransform();
-                        g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan
-                        g.ScaleTransform((float)PlaneFlakes[0].hp / (float)PlaneFlakes[0].maxhp, 1, MatrixOrder.Append); //scale
-                        g.TranslateTransform(0, 0, MatrixOrder.Append); //pan
-                        g.DrawImage(UI.hpimage, 0, 0); //draw
-                        //画字
-                        g.ResetTransform();
-                        g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan
-                        g.TranslateTransform(100, 12, MatrixOrder.Append); //pan
-                        Font font = new Font("微软雅黑", 16);
-                        Brush brush = new SolidBrush(Color.White);
-                        e.Graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.SingleBitPerPixel;
-                        g.DrawString(PlaneFlakes[0].hp.ToString() + "/" + PlaneFlakes[0].maxhp.ToString(), font, brush, PointF.Empty);
-                    }
-                    //得分
-                    g.ResetTransform();
-                    g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan
-                    g.TranslateTransform(10, 40, MatrixOrder.Append); //pan
-                    Font fo = new Font("微软雅黑", 20);
-                    Brush bru = new SolidBrush(Color.White);
-                    e.Graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.SingleBitPerPixel;
-                    g.DrawString("Scroe:" + Player.Score, fo, bru, PointF.Empty);
-                    //最高得分
-                    g.ResetTransform();
-                    g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan
-                    g.TranslateTransform(10, 70, MatrixOrder.Append); //pan
-                    fo = new Font("微软雅黑", 20);
-                    bru = new SolidBrush(Color.White);
-                    e.Graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.SingleBitPerPixel;
-                    g.DrawString("MaxScroe:" + Player.MaxScore, fo, bru, PointF.Empty);
-                    //画炸弹
-                    g.ResetTransform();
-                    g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan
-                    g.ScaleTransform(1, (float)1.1, MatrixOrder.Append); //scale
-                    g.TranslateTransform(16, 102, MatrixOrder.Append); //pan
-                    g.DrawImage(UI.Boom, 0, 0); //draw
-                    //显示炸弹数量
-                    g.ResetTransform();
-                    g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan
-                    g.TranslateTransform(32, 96, MatrixOrder.Append); //pan
-                    fo = new Font("微软雅黑", 16);
-                    bru = new SolidBrush(Color.White);
-                    e.Graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.SingleBitPerPixel;
-                    g.DrawString(":" + Player.BoomCount.ToString(), fo, bru, PointF.Empty);
+                    s.image = Image.FromFile(Application.StartupPath.ToString()+"\\"+"Resources\\Effect\\E" + effID + "\\1.png");
+                }
+                catch (Exception Ex)
+                {
+                    //MessageBox.Show("Error:" + Ex.Message + "::Location 03", "Aircraft Battle Error Message");
+                    return;
+                }
+                EffectFlakes.Add(s);
+            }
+            if (effID == 3)
+            {
+                Effect s = new Effect();
+                Random rd = new Random();
+                //Trace.WriteLine(x.ToString());
+                s.actID = Convert.ToByte(effID);
+                s.imageID = 1;
+                s.X = x;
+                s.Y = y;
+                //s.reg = 90;
+                //s.speed = 3;
+                s.Scale = (float)1;
+                s.lifetime = 0;
+                s.lifemax = 14;
+                s.brushtime = 3;
+                s.size = 0;
+                s.MoveX = 5;
+                s.MoveY = 5;
+                s.Scale = 5;
+                try
+                {
+                    s.image = Image.FromFile(Application.StartupPath.ToString() + "\\" + "Resources\\Effect\\E" + effID + "\\1.png");
+                }
+                catch (Exception Ex)
+                {
+                    //MessageBox.Show("Error:" + Ex.Message + "::Location 03", "Aircraft Battle Error Message");
+                    return;
+                }
+                EffectFlakes.Add(s);
+            }
+        }
+        /// <summary>
+        /// 1：一架破飞机 攻击1 生命值2 射速40 弹速 快
+        /// 2：散弹 攻击力1 生命值1 射速40 弹速 慢
+        /// 3: 环形 攻击力1 生命值5 射速50 弹速 很慢 
+        /// 4: 十字 攻击力1 生命值3 射速50 弹速 很慢
+        /// 5: 自瞄？
+        /// 6: 一个BOSS？
+        /// 7: 特殊-过场特殊单位，拥有ID为2-5随机的攻击方式， 低间隔的攻击与较高的移动速度
+        /// </summary>
+        /// <param name="ID"></param>
+        public void CreateEnemy(int ID)
+        {
+            int EnemyID = ID;
+            try
+            {
+                if (ID == 1)
+                {
+                    Enemy s = new Enemy();
+                    Random rd = new Random();
+                    float x = (float)rd.Next(s.Size, this.Width - s.Size);
+                    //Trace.WriteLine(x.ToString());
+                    s.X = x;
+                    s.Y = 32;
+                    s.reg = 90;
+                    s.hp = 1;
+                    s.speed = 3;
+                    s.BulletID = 7;
+                    s.Scale = 1;
+                    s.attack = 1;
+                    s.WeaponID = 0;
+                    s.score = 1;
+                    s.BulletMoveX = -8;
+                    s.BulletMoveY = 2;
                     try
                     {
-                        if (DB == true)
+                        s.image = Image.FromFile(Application.StartupPath.ToString()+"\\"+"Resources\\Enemy\\" + EnemyID + ".png");
+                    }
+                    catch (Exception Ex)
+                    {
+                        //MessageBox.Show("Error:" + Ex.Message + "::Location 03", "Aircraft Battle Error Message");
+                        return;
+                    }
+                    EnemyFlakes.Add(s);
+                }
+                if (ID == 2)
+                {
+                    Enemy s = new Enemy();
+                    Random rd = new Random();
+                    float x = (float)rd.Next(s.Size, this.Width - s.Size);
+                    //Trace.WriteLine(x.ToString());
+                    s.X = x;
+                    s.Y = 32;
+                    s.reg = 90;
+                    s.hp = 1;
+                    s.speed = 2;
+                    s.BulletID = 10;
+                    s.Scale = 1;
+                    s.attack = 1;
+                    s.WeaponID = 2;
+                    s.score = 2;
+                    s.Attack_interval = 40;
+                    try
+                    {
+                        s.image = Image.FromFile(Application.StartupPath.ToString()+"\\"+"Resources\\Enemy\\" + EnemyID + ".png");
+                    }
+                    catch (Exception Ex)
+                    {
+                        //MessageBox.Show("Error:" + Ex.Message + "::Location 03", "Aircraft Battle Error Message");
+                        return;
+                    }
+                    EnemyFlakes.Add(s);
+                }
+                if (ID == 3)
+                {
+                    Enemy s = new Enemy();
+                    Random rd = new Random();
+                    float x = (float)rd.Next(s.Size, this.Width - s.Size);
+                    //Trace.WriteLine(x.ToString());
+                    s.X = x;
+                    s.Y = 32;
+                    s.reg = 90;
+                    s.hp = 3;
+                    s.speed = (float)0.75;
+                    s.BulletID = 11;
+                    s.Scale = 1;
+                    s.attack = 1;
+                    s.WeaponID = 3;
+                    s.score = 5;
+                    s.Attack_interval = 60;
+                    try
+                    {
+                        s.image = Image.FromFile(Application.StartupPath.ToString()+"\\"+"Resources\\Enemy\\" + EnemyID + ".png");
+                    }
+                    catch (Exception Ex)
+                    {
+                        //MessageBox.Show("Error:" + Ex.Message + "::Location 03", "Aircraft Battle Error Message");
+                        return;
+                    }
+                    EnemyFlakes.Add(s);
+                } 
+                if (ID == 4)
+                {
+                    Enemy s = new Enemy();
+                    Random rd = new Random();
+                    float x = (float)rd.Next(s.Size, this.Width - s.Size);
+                    //Trace.WriteLine(x.ToString());
+                    s.X = x;
+                    s.Y = 32;
+                    s.reg = 90;
+                    s.hp = 3;
+                    s.speed = (float)1.5;
+                    s.BulletID = 9;
+                    s.Scale = 1;
+                    s.attack = 1;
+                    s.WeaponID = 4;
+                    s.score = 3;
+                    s.Attack_interval = 50;
+                    try
+                    {
+                        s.image = Image.FromFile(Application.StartupPath.ToString()+"\\"+"Resources\\Enemy\\" + EnemyID + ".png");
+                    }
+                    catch (Exception Ex)
+                    {
+                        //MessageBox.Show("Error:" + Ex.Message + "::Location 03", "Aircraft Battle Error Message");
+                        return;
+                    }
+                    EnemyFlakes.Add(s);
+                }
+                if (ID == 5)
+                {
+                    Enemy s = new Enemy();
+                    Random rd = new Random();
+                    float x = (float)rd.Next(s.Size, this.Width - s.Size);
+                    //Trace.WriteLine(x.ToString());
+                    s.X = x;
+                    s.Y = 32;
+                    s.reg = 90;
+                    s.hp = 1;
+                    s.speed = (float)3;
+                    s.BulletID = 8;
+                    s.Scale = 1;
+                    s.attack = 1;
+                    s.WeaponID =5;
+                    s.score = 2;
+                    s.Attack_interval = 35;
+                    try
+                    {
+                        s.image = Image.FromFile(Application.StartupPath.ToString()+"\\"+"Resources\\Enemy\\" + EnemyID + ".png");
+                    }
+                    catch (Exception Ex)
+                    {
+                        //MessageBox.Show("Error:" + Ex.Message + "::Location 03", "Aircraft Battle Error Message");
+                        return;
+                    }
+                    EnemyFlakes.Add(s);
+                }
+                if (ID == 6)
+                {
+                    DB = true;
+
+                    Enemy s = new Enemy();
+                    Random rd = new Random();
+                    float x = (float)this.Width / 2;
+                    //Trace.WriteLine(x.ToString());
+                    s.X = x;
+                    s.Y = 32;
+                    s.reg = 90;
+                    s.hp = 150;
+                    s.maxhp = 150;
+                    s.speed = (float)0.5;
+                    s.BulletID = 6;
+                    s.Scale = 1;
+                    s.attack = 1;
+                    s.WeaponID = 100;
+                    s.score = 2;
+                    s.Attack_interval = 300;
+                    s.IsBoss = true;
+                    s.AI_Count = 100;
+                    try
+                    {
+                        s.image = Image.FromFile(Application.StartupPath.ToString()+"\\"+"Resources\\Enemy\\" + EnemyID + ".png");
+                    }
+                    catch (Exception Ex)
+                    {
+                        //MessageBox.Show("Error:" + Ex.Message + "::Location 03", "Aircraft Battle Error Message");
+                        return;
+                    }
+                    EnemyFlakes.Add(s);
+                    for (int i = 0; i < EnemyFlakes.Count; i++)
+                    {
+                        if (EnemyFlakes[i].IsBoss == true)
                         {
-                            //画框
-                            g.ResetTransform();
-                            g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan
-                            g.ScaleTransform(1, (float)1.1, MatrixOrder.Append); //scale
-                            g.TranslateTransform(300, 5, MatrixOrder.Append); //pan
-                            g.DrawImage(UI.hpimage2, 0, 0); //draw
-                            //画条
-                            for (int i = 0; i < EnemyFlakes.Count; i++)
-                            {
-                                //标记BOSS在enemyflakes中的索引位置
-                                if (EnemyFlakes[i].IsBoss == true)
-                                {
-                                    //记录
-                                    BossID = i;
-                                    break;
-                                }
-                            }
-                            if (EnemyFlakes[BossID].hp > 0)
-                            {
-                                g.ResetTransform();
-                                g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan
-                                g.ScaleTransform((float)EnemyFlakes[BossID].hp / (float)EnemyFlakes[BossID].maxhp, 1, MatrixOrder.Append); //scale
-                                g.TranslateTransform(296, 0, MatrixOrder.Append); //pan
-                                g.DrawImage(UI.hpimage, 0, 0); //draw
-                                //画字
-                                g.ResetTransform();
-                                g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan
-                                g.TranslateTransform(305, 12, MatrixOrder.Append); //pan
-                                Font font = new Font("微软雅黑", 16);
-                                Brush brush = new SolidBrush(Color.White);
-                                e.Graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.SingleBitPerPixel;
-                                g.DrawString("BOSS生命值：" + EnemyFlakes[BossID].hp.ToString() + "/" + EnemyFlakes[BossID].maxhp, font, brush, PointF.Empty);
-                            }
+                            BossID = i;
+                            break;
                         }
                     }
-                    catch
-                    { }
-                }
-            }
-            //暂停界面
-            if (Canves == 0)
-            {
-                //绘制音量图标
-                g.ResetTransform();
-                g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan
-                g.ScaleTransform((float)0.5, (float)0.5, MatrixOrder.Append); //scale
-                g.TranslateTransform(730, 15, MatrixOrder.Append); //pan
-                g.DrawImage(UI.SoundImage, 0, 0); //draw
-                //绘制鼠标图标
-                g.ResetTransform();
-                g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan
-                g.ScaleTransform((float)0.5, (float)0.5, MatrixOrder.Append); //scale
-                g.TranslateTransform(670, 20, MatrixOrder.Append); //pan
-                g.DrawImage(UI.Mouse, 0, 0); //draw
-                //-------------
-                g.ResetTransform();
-                g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan                    
-                g.TranslateTransform(100, 140, MatrixOrder.Append); //pan
-                Font font = new Font("微软雅黑", 60);
-                Brush brush = new SolidBrush(Color.White);
-                e.Graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.SingleBitPerPixel;
-                g.DrawString("游戏暂停中...", font, brush, PointF.Empty);
-                g.ResetTransform();
-                g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan                    
-                g.TranslateTransform(100, 260, MatrixOrder.Append); //pan
-                font = new Font("微软雅黑", 60);
-                brush = new SolidBrush(Color.White);
-                e.Graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.SingleBitPerPixel;
-                g.DrawString("按下空格键继续...", font, brush, PointF.Empty);
-            }
-            //游戏开始界面
-            if (Canves == 2)
-            {
-                //绘制背景
-                g.ResetTransform();
-                g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan
-                g.ScaleTransform((float)0.75, (float)0.75, MatrixOrder.Append); //scale
-                g.TranslateTransform(0, 0, MatrixOrder.Append); //pan
-                g.DrawImage(UI.BackG, 0, 0); //draw
-                //绘制音量图标
-                g.ResetTransform();
-                g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan
-                g.ScaleTransform((float)0.5, (float)0.5, MatrixOrder.Append); //scale
-                g.TranslateTransform(730, 15, MatrixOrder.Append); //pan
-                g.DrawImage(UI.SoundImage, 0, 0); //draw
-                //绘制开始按钮
-                g.ResetTransform();
-                g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan
-                g.ScaleTransform(1, (float)1.1, MatrixOrder.Append); //scale
-                g.TranslateTransform(240,200 , MatrixOrder.Append); //pan
-                g.DrawImage(UI.PlayBtn, 0, 0); //draw
-                //绘制鼠标图标
-                g.ResetTransform();
-                g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan
-                g.ScaleTransform((float)0.5, (float)0.5, MatrixOrder.Append); //scale
-                g.TranslateTransform(670, 20, MatrixOrder.Append); //pan
-                g.DrawImage(UI.Mouse, 0, 0); //draw
-                //绘制其他按钮
-                /*
-                g.ResetTransform();
-                g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan
-                g.ScaleTransform(1, (float)1.1, MatrixOrder.Append); //scale
-                g.TranslateTransform(280, 325, MatrixOrder.Append); //pan
-                g.DrawImage(UI.ShopBtn, 0, 0); //draw
-                 * */
-            }
-            myBuffer.Render(e.Graphics);
-            g.Dispose();
-            myBuffer.Dispose();
-        }
+                    Thread theader = new Thread(new ThreadStart(new Action(() =>
+                    {
+                        Thread.Sleep(5000);
+                        s.speed = 0;
+                    })));
+                    theader.Start();
 
-        private void Form1_KeyDown(object sender, KeyEventArgs e)
-        {
-            try
-            {
-                if (Canves != 1)
-                {
-                    return;
                 }
-                //Trace.WriteLine(e.KeyCode.ToString());
-                if (e.KeyCode == Keys.Up || e.KeyCode == Keys.W)
+                if (ID == 7)
                 {
-                    Player.KeyIsDown[1] = true;
-                    Player.KeyIsDown[3] = false;
-                }
-                if (e.KeyCode == Keys.Down || e.KeyCode == Keys.S)
-                {
-                    Player.KeyIsDown[3] = true;
-                    Player.KeyIsDown[1] = false;
-                }
-                if (e.KeyCode == Keys.Left || e.KeyCode == Keys.A)
-                {
-                    Player.KeyIsDown[2] = true;
-                    Player.KeyIsDown[4] = false;
-                }
-                if (e.KeyCode == Keys.Right || e.KeyCode == Keys.D)
-                {
-                    Player.KeyIsDown[4] = true;
-                    Player.KeyIsDown[2] = false;
-                }
-                if (e.KeyCode == Keys.ShiftKey)
-                {
-                    Trace.WriteLine("按下shift");
-                    Player.KeyIsDown[5] = true;
-                }
-                PlaneMove();
-            }
-            catch
-            { }
-        }
+                    Enemy s = new Enemy();
+                    Random rd = new Random(Convert.ToInt32(new Guid().GetHashCode()));
+                    float x = (float)(this.Width - 50);
+                    //Trace.WriteLine(x.ToString());
+                    s.X = x;
+                    s.Y = 64;
+                    s.reg = 180;
+                    s.hp = 1;
+                    s.maxhp = 2;
+                    s.speed = (float)15;
+                    s.BulletID = 6;
+                    s.Scale = 1;
+                    s.attack = 1;
+                    s.WeaponID = (int)rand.Next(2,6);
+                    rd = new Random(Convert.ToInt32(new Guid().GetHashCode()));
+                    s.Weapon2 = rd.Next(6, 20); ;
+                    s.score = 2;
+                    rd = new Random(Convert.ToInt32(new Guid().GetHashCode()));
+                    s.Attack_interval =rd.Next(6,20);
+                    try
+                    {
+                        s.image = Image.FromFile(Application.StartupPath.ToString()+"\\"+"Resources\\Enemy\\7.png");
+                    }
+                    catch (Exception Ex)
+                    {
+                        //MessageBox.Show("Error:" + Ex.Message + "::Location 03", "Aircraft Battle Error Message");
+                        return;
+                    }
+                    EnemyFlakes.Add(s);
 
-        private void Form1_KeyUp(object sender, KeyEventArgs e)
-        {
-            try
-            {
-                if (Canves != 1)
-                {
-                    return;
                 }
-                //Trace.WriteLine("KeyUp:"+e.KeyCode.ToString());
-                if (e.KeyCode == Keys.Up || e.KeyCode == Keys.W)
-                {
-                    Player.KeyIsDown[1] = false;
-                }
-                if (e.KeyCode == Keys.Down || e.KeyCode == Keys.S)
-                {
-                    Player.KeyIsDown[3] = false;
-                }
-                if (e.KeyCode == Keys.Left || e.KeyCode == Keys.A)
-                {
-                    Player.KeyIsDown[2] = false;
-                }
-                if (e.KeyCode == Keys.Right || e.KeyCode == Keys.D)
-                {
-                    Player.KeyIsDown[4] = false;
-                }
-                if (e.KeyCode == Keys.ShiftKey)
-                {
-                    Player.KeyIsDown[5] = false;
-                }
-                PlaneMove();
             }
-            catch { }
+            catch (Exception Ex)
+            {
+                //MessageBox.Show("Error02:" + Ex.Message + "::Location 04", "Aircraft Battle Error Message");
+                return;
+            }
+
         }
+        /// <summary>
+        /// 飞机移动设置
+        /// </summary>
         private void PlaneMove()
         {
             try
@@ -1645,69 +955,17 @@ namespace Aircraft_Battle
         {
             return (float)Math.Sqrt((b - y) * (b - y) + (a - x) * (a - x));
         }
+        /// <summary>
+        /// 获取坐标间角度
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
         public float Atan2ForCoordinate(float x, float y, float a, float b)
         {
             return (float)(Math.Atan2(b - y, a - x) * 180 / Math.PI);
-        }
-        private void timer1_Tick(object sender, EventArgs e)
-        {
-            
-            Random rd = new Random(Convert.ToInt32(Guid.NewGuid().GetHashCode()));
-            if (rd.Next(1, 100) < 5)
-            {
-                //随机生成飞机
-                Thread theader = new Thread(new ThreadStart(new Action(() =>
-                {
-                    Thread.Sleep(50);
-                    CreateEnemy(4);
-                })));
-                theader.Start();
-
-            }
-            rd = new Random(Convert.ToInt32(Guid.NewGuid().GetHashCode()));
-            if (rd.Next(1, 100) < 5)
-            {
-                //随机生成飞机
-                Thread theader = new Thread(new ThreadStart(new Action(() =>
-                {
-                    Thread.Sleep(50);
-                    CreateEnemy(7);
-                })));
-                theader.Start();
-
-            }
-            rd = new Random(Convert.ToInt32(Guid.NewGuid().GetHashCode()));
-            if(rd.Next(1, 100) < 20)
-            {
-                //随机生成飞机
-                Thread theader = new Thread(new ThreadStart(new Action(() =>
-                {
-                    Thread.Sleep(150);
-                    CreateEnemy(5);
-                })));
-                theader.Start();
-
-            }
-            Thread.Sleep(1);
-            CreateEnemy(1);
-        }
-        int EnCount = 0;
-        private void timer2_Tick(object sender, EventArgs e)
-        {
-            
-            EnCount++;
-            if (EnCount % 3 == 0)
-            {
-                CreateEnemy(3);
-            }
-            else
-            {
-                CreateEnemy(2);
-            }
-            if (EnCount > 1000)
-            {
-                EnCount = 0;
-            }
         }
         /// <summary>
         /// 0:敌人的直线向下攻击，武器ID1：玩家的直线向上攻击
@@ -1734,7 +992,7 @@ namespace Aircraft_Battle
                     s.reg = 90;
                     s.Rotation = 90;
                     s.damage = attack;
-                    s.speed = 15;
+                    s.speed = 10;
                     //s.RotVelocity = rand.Next(-3, 3) * 2;
                     //s.lifetime = 0;
                     s.Scale = 2;
@@ -2006,7 +1264,7 @@ namespace Aircraft_Battle
                     s.upspeed = (float)0.2;
                     try
                     {
-                        s.image = Image.FromFile(Application.StartupPath.ToString()+"\\"+"Resources\\Bullet\\" + 2 + ".png");
+                        s.image = Image.FromFile(Application.StartupPath.ToString()+"\\"+"Resources\\Bullet\\" + 6 + ".png");
                     }
                     catch (Exception Ex)
                     {
@@ -2075,7 +1333,7 @@ namespace Aircraft_Battle
                 s.speed = 7;
                  try
                  {
-                       s.image = Image.FromFile(Application.StartupPath.ToString()+"\\"+"Resources\\Bullet\\" + 4+ ".png");
+                       s.image = Image.FromFile(Application.StartupPath.ToString()+"\\"+"Resources\\Bullet\\" + 11+ ".png");
                   }
                   catch (Exception Ex)
                   {
@@ -2100,7 +1358,7 @@ namespace Aircraft_Battle
                            bs.speed = 5;
                            try
                            {
-                               bs.image = Image.FromFile(Application.StartupPath.ToString()+"\\"+"Resources\\Bullet\\" + 4 + ".png");
+                               bs.image = Image.FromFile(Application.StartupPath.ToString()+"\\"+"Resources\\Bullet\\" + 6 + ".png");
                            }
                            catch (Exception Ex)
                            {
@@ -2137,7 +1395,7 @@ namespace Aircraft_Battle
                                bs.deviation = 4;
                                try
                                {
-                                   bs.image = Image.FromFile(Application.StartupPath.ToString()+"\\"+"Resources\\Bullet\\" + 2 + ".png");
+                                   bs.image = Image.FromFile(Application.StartupPath.ToString()+"\\"+"Resources\\Bullet\\" + 8 + ".png");
                                }
                                catch
                                {
@@ -2164,7 +1422,7 @@ namespace Aircraft_Battle
 
                                bs.damage = attack;
                                bs.Scale = 3;
-                               bs.speed = 3;
+                               bs.speed = 7;
                                bs.deviation = 4;
                                try
                                {
@@ -2179,7 +1437,6 @@ namespace Aircraft_Battle
                        }
                        //Thread.Sleep(1000);
                        //第四下
-                       
                        /*for (int a = 0; a < 18; a++)
                        {
                            for (int i = 0; i < 6; i++)
@@ -2200,7 +1457,7 @@ namespace Aircraft_Battle
                        s.speed = 7;
                        try
                        {
-                           s.image = Image.FromFile(Application.StartupPath.ToString()+"\\"+"Resources\\Bullet\\" + 4 + ".png");
+                           s.image = Image.FromFile(Application.StartupPath.ToString()+"\\"+"Resources\\Bullet\\" + 8 + ".png");
                        }
                        catch (Exception Ex)
                        {
@@ -2210,48 +1467,6 @@ namespace Aircraft_Battle
                        BulletFlakes.Add(s);
                    })));
                    theader.Start();
-            }
-        }
-        private void Form1_KeyPress(object sender, KeyPressEventArgs e)
-        {
-            if (GameOver == true)
-            {
-                //Trace.WriteLine(e.KeyChar.ToString());
-                if ((int)e.KeyChar == 32&&Canves!=2)
-                {
-                    Canves = 2;
-                    GameCenterTimer.Enabled = true;
-                    return;
-                }
-            }
-            if ((int)e.KeyChar == 32&&Canves ==1)
-            {
-                if (Player.BoomCount > 0)
-                {
-
-                    if (Game.Music == true)
-                    {
-                        SoundPlay(Application.StartupPath.ToString()+"\\"+"Resources\\Sound\\Game\\Boom.wav");
-                    }
-                    Boom();
-                }
-            }
-            if ((int)e.KeyChar == 32 && Canves == 0)
-            {
-                GameStop(false);
-            }
-        }
-        public int IT_Count = 0;
-        private void InvincibleTimer_Tick(object sender, EventArgs e)
-        {
-            if (PlaneFlakes[0].Invincible == true)
-            {
-                IT_Count++;
-                if (IT_Count % 3 == 0)
-                {
-                    IT_Count = 0;
-                    PlaneFlakes[0].Invincible = false;
-                }
             }
         }
         /// <summary>
@@ -2274,7 +1489,7 @@ namespace Aircraft_Battle
                     if (BulletFlakes[i].ownning != 1)
                     {
                         BulletFlakes[i].hp -= 1;
-                        CreateEffect(2, BulletFlakes[i].X, BulletFlakes[i].Y);
+                        //CreateEffect(2, BulletFlakes[i].X, BulletFlakes[i].Y);
                     }
                 }
                 //CreateBoomEffect
@@ -2284,6 +1499,1022 @@ namespace Aircraft_Battle
         }
 
 
+        //Game timer event 
+        public int IT_Count = 0;
+        private void InvincibleTimer_Tick(object sender, EventArgs e)
+        {
+            if (PlaneFlakes[0].Invincible == true)
+            {
+                IT_Count++;
+                if (IT_Count % 10 == 0)
+                {
+                    IT_Count = 0;
+                    PlaneFlakes[0].Invincible = false;
+                }
+            }
+        }
+        /// <summary>
+        /// 敌人刷新器
+        /// </summary>
+        private void timer1_Tick(object sender, EventArgs e)
+        {
+
+            Random rd = new Random(Convert.ToInt32(Guid.NewGuid().GetHashCode()));
+            if (rd.Next(1, 100) < 5)
+            {
+                //随机生成飞机
+                Thread theader = new Thread(new ThreadStart(new Action(() =>
+                {
+                    Thread.Sleep(50);
+                    CreateEnemy(4);
+                })));
+                theader.Start();
+
+            }
+            rd = new Random(Convert.ToInt32(Guid.NewGuid().GetHashCode()));
+            if (rd.Next(1, 100) < 5)
+            {
+                //随机生成飞机
+                Thread theader = new Thread(new ThreadStart(new Action(() =>
+                {
+                    Thread.Sleep(50);
+                    CreateEnemy(7);
+                })));
+                theader.Start();
+
+            }
+            rd = new Random(Convert.ToInt32(Guid.NewGuid().GetHashCode()));
+            if (rd.Next(1, 100) < 20)
+            {
+                //随机生成飞机
+                Thread theader = new Thread(new ThreadStart(new Action(() =>
+                {
+                    Thread.Sleep(150);
+                    CreateEnemy(5);
+                })));
+                theader.Start();
+
+            }
+            Thread.Sleep(1);
+            CreateEnemy(1);
+        }
+        /// <summary>
+        /// 特殊的敌人刷新器
+        /// </summary>
+        private void timer2_Tick(object sender, EventArgs e)
+        {
+
+            EnCount++;
+            if (EnCount % 3 == 0)
+            {
+                CreateEnemy(3);
+            }
+            else
+            {
+                CreateEnemy(2);
+            }
+            if (EnCount > 1000)
+            {
+                EnCount = 0;
+            }
+        }
+        private void timer3_Tick(object sender, EventArgs e)
+        {
+            this.timer3.Enabled = false;
+            timer3.Stop();
+            this.timer1.Enabled = false;
+            this.timer2.Enabled = false;
+            GameMusic = Application.StartupPath.ToString() + "\\" + "Resources\\Sound\\2.wav";
+            if (Game.Music == true)
+            {
+                splayer.Stop();
+                splayer.SoundLocation = GameMusic;
+                splayer.PlayLooping();
+            }
+            Thread theader = new Thread(new ThreadStart(new Action(() =>
+            {
+                Thread.Sleep(5000);
+                Player.BoomCount++;
+                Boom();
+                Thread.Sleep(1000);
+                CreateEnemy(6);
+            })));
+            theader.Start();
+
+        }
+        private void timer4_Tick(object sender, EventArgs e)
+        {
+
+        }
+
+        #region 绘图相关
+        /// <summary>
+        /// 绘制玩家的飞机 - 
+        /// </summary>
+        /// <param name="g"></param>
+        private void Drawtest(Graphics g)
+        {
+            // Create image.
+            Image newImage = Image.FromFile(Application.StartupPath.ToString() + "\\" + "Resources\\Plane\\A02.png");
+
+            // Create rectangle for displaying image.
+            Rectangle destRect = new Rectangle(100, 100, 400, 100);
+
+            // Create coordinates of rectangle for source image.
+            int x = 200;
+            int y = 0;
+            int width = 100;
+            int height = 100;
+            GraphicsUnit units = GraphicsUnit.Pixel;
+
+            g.ResetTransform();
+            g.ScaleTransform((float)0.2, (float)0.2, MatrixOrder.Append); //scale
+            g.TranslateTransform(350, 350, MatrixOrder.Append); //pan
+            g.DrawImage(newImage, destRect, x, y, width, height, units); //draw
+
+
+        }
+        private void DrawBullet(Graphics g)
+        {
+            for (int ii = 0; ii < BulletFlakes.Count; ii++)
+            {
+                Bullet a1 = BulletFlakes[ii];
+                if (a1.ownning == 0)
+                {
+                    Random rd = new Random(Convert.ToInt32(Guid.NewGuid().GetHashCode()));
+                    //int it = rd.Next(0, 1);
+                    if (a1.speedup == true)
+                    {
+                        a1.speed += a1.upspeed;
+                    }
+                }
+                a1.X = (float)a1.X + (float)Math.Cos(a1.reg / 180 * Math.PI) * a1.speed;
+                a1.Y = (float)a1.Y + (float)Math.Sin(a1.reg / 180 * Math.PI) * a1.speed;
+                //碰撞判断
+                if (a1.Scale > 1)
+                {
+                    a1.Scale -= (float)0.5;
+                }
+                else
+                {
+                    a1.Scale = (float)1;
+                }
+                float PlayerX = PlaneFlakes[0].X + PlaneFlakes[0].Size / 2;
+                float PlayerY = PlaneFlakes[0].Y + PlaneFlakes[0].Size / 2;
+                float PlayerSize = PlaneFlakes[0].Size;
+                if (a1.ownning == 0)
+                {
+                    //敌人的子弹
+                    //Trace.WriteLine(GetDistance(a1.X + (a1.Size / 2), a1.Y + (a1.Size / 2), (PlayerX + PlayerSize / 2), (PlayerY + PlayerSize / 2)));
+                    if (GetDistance(a1.X + (a1.Size / 2), a1.Y + (a1.Size / 2), (PlayerX /*+ PlayerSize / 2*/), (PlayerY /*+ PlayerSize / 2*/)) <= a1.deviation + PlaneFlakes[0].deviation)
+                    {
+                        //子弹命中
+                        //Trace.WriteLine("敌人的子弹命中");
+                        if (PlaneFlakes[0].Invincible == false)
+                        {
+                            CreateEffect(2, PlaneFlakes[0].X + PlaneFlakes[0].Size / 2, PlaneFlakes[0].Y);
+                            PlaneFlakes[0].hp -= a1.damage;
+                            PlaneFlakes[0].Invincible = true;
+                            a1.X = -1;
+                            a1.Y = -1;
+                        }
+                    }
+                }
+                else
+                {
+                    //玩家的子弹
+                    for (int bb = 0; bb < EnemyFlakes.Count; bb++)
+                    {
+                        //碰撞判断
+                        float X = EnemyFlakes[bb].X + EnemyFlakes[bb].Size / 2;
+                        float Y = EnemyFlakes[bb].Y + EnemyFlakes[bb].Size / 2;
+                        float Size = EnemyFlakes[bb].Size;
+                        //玩家的子弹
+                        //Trace.WriteLine(GetDistance(GetDistance(a1.X + a1.Size / 2, a1.Y + a1.Size / 2, X - Size / 2, Y - Size / 2));
+                        if (GetDistance(a1.X + (a1.Size / 2), a1.Y + (a1.Size / 2), X /*+ (Size / 2)*/, Y /*+ (Size / 2)*/) <= a1.deviation + EnemyFlakes[bb].deviation)
+                        {
+                            //子弹命中
+                            //Trace.WriteLine("玩家的子弹命中");
+                            CreateEffect(2, EnemyFlakes[bb].X, EnemyFlakes[bb].Y);
+                            EnemyFlakes[bb].hp -= a1.damage;
+                            a1.X = -1;
+                            a1.Y = -1;
+                        }
+
+                    }
+                }
+                if (a1.X > this.Width || a1.Y > this.Height || a1.X < 0 || a1.Y < 0 || a1.hp < 1)
+                {
+                    //离开画面，清除
+                    a1.Scale = 1f;
+                    a1.image = null;
+                    BulletFlakes.RemoveAt(ii);
+                }
+                else
+                {
+                    //绘制图像
+                    g.ResetTransform();
+                    g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan
+                    g.ScaleTransform(a1.Scale, a1.Scale, MatrixOrder.Append); //scale
+                    g.RotateTransform(a1.Rotation, MatrixOrder.Append); //rotate
+                    g.TranslateTransform(a1.X + a1.Size / 2, a1.Y + a1.Size / 2, MatrixOrder.Append); //pan
+                    g.DrawImage(a1.image, 0, 0); //draw
+                }
+            }
+        }
+        private void DrawLight(Graphics g)
+        {
+            for (int ii = 0; ii < LightFlakes.Count; ii++)
+            {
+                Light a1 = LightFlakes[ii];
+                //移动
+                if (a1.ownning == 1)
+                {
+                    a1.X = PlaneFlakes[0].X + (float)PlaneFlakes[0].Size / 2;
+                    a1.Y = PlaneFlakes[0].Y + (float)PlaneFlakes[0].Size / 2;
+                }
+
+                //伤害
+                a1.count++;
+                if (a1.count % a1.hurttime == 0 && a1.count != 0)
+                {
+                    //a1.count = 0;
+                    for (int bb = 0; bb < EnemyFlakes.Count; bb++)
+                    {
+                        //碰撞判断
+                        float X = EnemyFlakes[bb].X + EnemyFlakes[bb].Size / 2;
+                        float Y = EnemyFlakes[bb].Y + EnemyFlakes[bb].Size / 2;
+                        float Size = EnemyFlakes[bb].Size;
+
+                        if (X > a1.X && X < a1.X + a1.Size && Y < a1.Y)
+                        {
+                            CreateEffect(2, EnemyFlakes[bb].X, EnemyFlakes[bb].Y);
+                            EnemyFlakes[bb].hp -= a1.damage;
+                        }
+                    }
+                }
+                //刷新动画
+                if (a1.count % a1.brushtime == 0)
+                {
+                    a1.imageID++;
+                    if (a1.imageID > a1.imgcount)
+                    {
+                        a1.imageID = 1;
+                    }
+                    a1.image = Image.FromFile(Application.StartupPath.ToString() + "\\" + "Resources\\Light\\" + a1.id + "\\" + a1.imageID + ".png");
+                }
+                a1.life++;
+                if (a1.life > a1.lifemax)
+                {
+                    //移除
+                    a1.count = 0;
+                    LightFlakes.Remove(a1);
+                }
+                else
+                {
+                    //绘制特效图像
+                    g.ResetTransform();
+                    g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan
+                    g.ScaleTransform(a1.Scale, a1.Scale, MatrixOrder.Append); //scale
+                    g.RotateTransform(a1.Rotation, MatrixOrder.Append); //rotate
+                    g.TranslateTransform(a1.X - ((a1.MoveX) * a1.Scale), a1.Y - ((a1.MoveY) * a1.Scale), MatrixOrder.Append); //pan
+                    g.DrawImage(a1.image, 0, 0); //draw
+                }
+
+            }
+        }
+        private void DrawEnemy(Graphics g)
+        {
+            for (int ii = 0; ii < EnemyFlakes.Count; ii++)
+            {
+                Enemy ss1 = EnemyFlakes[ii];
+                /*if (ss1.IsBoss == true)
+                {
+                    BossID = ii;
+                }*/
+                ss1.X = (float)ss1.X + (float)Math.Cos(ss1.reg / 180 * Math.PI) * ss1.speed;
+                ss1.Y = (float)ss1.Y + (float)Math.Sin(ss1.reg / 180 * Math.PI) * ss1.speed;
+                if (ss1.hp <= 0 || (ss1.X > this.Width || ss1.Y > this.Height || ss1.X < 0 || ss1.Y < 0))
+                {
+                    //单位被摧毁
+                    SoundPlay(SoundPath.UnitDieSound);
+                    CreateEffect(1, ss1.X, ss1.Y);
+                    if (ss1.IsBoss == true)
+                    {
+                        DB = false;
+                        PlaneFlakes[0].hp++;
+                        PlaneFlakes[0].maxhp++;
+                        Player.BoomCount++;
+                        Player.Score += 25;
+                        timer1.Enabled = true;
+                        timer2.Enabled = true;
+                        GameMusic = Application.StartupPath.ToString() + "\\" + "Resources\\Sound\\1.wav";
+                        if (Game.Music == true)
+                        {
+                            splayer.Stop();
+                            splayer.SoundLocation = GameMusic;
+                            splayer.PlayLooping();
+                        }
+                        timer3.Enabled = true;
+                        timer3.Interval = 120000;
+                        timer3.Start();
+                    }
+                    ss1.Scale = 1f;
+                    ss1.image = null;
+                    EnemyFlakes.RemoveAt(ii);
+                    Player.Score += ss1.score;
+                    ss1.AI_Count = 0;
+                }
+                else
+                {
+                    //绘制画面图像
+                    g.ResetTransform();
+                    g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan
+                    g.ScaleTransform(ss1.Scale, ss1.Scale, MatrixOrder.Append); //scale
+                    g.RotateTransform(ss1.Rotation, MatrixOrder.Append); //rotate
+                    g.TranslateTransform(ss1.X - ss1.Size / 2, ss1.Y - ss1.Size / 2, MatrixOrder.Append); //pan
+                    g.DrawImage(ss1.image, 0, 0); //draw
+                }
+                if (ss1.AI_Count % ss1.Attack_interval == 0 && ss1.hp > 0)
+                {
+                    //发射子弹
+
+                    Weapon(ss1.WeaponID, ss1.X + ss1.BulletMoveX, ss1.Y + ss1.BulletMoveY, 0, ss1.attack, ss1.BulletID);
+                    Weapon(ss1.Weapon2, ss1.X + ss1.BulletMoveX, ss1.Y + ss1.BulletMoveY, 0, ss1.attack, ss1.BulletID);
+                }
+
+                //计数增加
+                ss1.AI_Count++;
+
+            }
+        }
+        private void DrawPlane(Graphics g)
+        {
+            // 绘制玩家的飞机
+            for (int ii = 0; ii < PlaneFlakes.Count; ii++)
+            {
+                Plane ss1 = PlaneFlakes[ii];
+                if (Game.UseMouse == true)
+                {
+                    PlaneFlakes[0].reg = Atan2ForCoordinate(PlaneFlakes[0].X, PlaneFlakes[0].Y, Game.MouseX, Game.MouseY);
+                    if (GetDistance(PlaneFlakes[0].X, PlaneFlakes[0].Y, Game.MouseX, Game.MouseY) > 10)
+                    {
+                        if (Player.KeyIsDown[5] == false)
+                        {
+                            PlaneFlakes[0].speed = 10;
+                        }
+                        else
+                        {
+                            PlaneFlakes[0].speed = 5;
+                        }
+                    }
+                    else
+                    {
+                        PlaneFlakes[0].speed = GetDistance(PlaneFlakes[0].X, PlaneFlakes[0].Y, Game.MouseX, Game.MouseY);
+                    }
+                }
+                if (!((float)ss1.X + (float)Math.Cos(ss1.reg / 180 * Math.PI) * ss1.speed > this.Width - ss1.Size
+                    || (float)ss1.Y + (float)Math.Sin(ss1.reg / 180 * Math.PI) * ss1.speed > this.Height - ss1.Size
+                    || (float)ss1.X + (float)Math.Cos(ss1.reg / 180 * Math.PI) * ss1.speed < 0
+                    || (float)ss1.Y + (float)Math.Sin(ss1.reg / 180 * Math.PI) * ss1.speed < 0))
+                {
+                    ss1.X = (float)ss1.X + (float)Math.Cos(ss1.reg / 180 * Math.PI) * ss1.speed;
+                    ss1.Y = (float)ss1.Y + (float)Math.Sin(ss1.reg / 180 * Math.PI) * ss1.speed;
+                }
+                for (int bb = 0; bb < EnemyFlakes.Count; bb++)
+                {
+                    //碰撞判断
+                    float X = EnemyFlakes[bb].X + EnemyFlakes[bb].Size / 2;
+                    float Y = EnemyFlakes[bb].Y + EnemyFlakes[bb].Size / 2;
+                    float Size = EnemyFlakes[bb].Size;
+                    //玩家的子弹
+                    //Trace.WriteLine(GetDistance(GetDistance(a1.X + a1.Size / 2, a1.Y + a1.Size / 2, X - Size / 2, Y - Size / 2));
+                    if (GetDistance(ss1.X + (ss1.Size / 2), ss1.Y + (ss1.Size / 2), X /*+ (Size / 2)*/, Y /*+ (Size / 2)*/) <= ss1.deviation + EnemyFlakes[bb].deviation)
+                    {
+                        if (ss1.Invincible == false)
+                        {
+                            ss1.hp--;
+                            EnemyFlakes[bb].hp -= 5;
+                        }
+                    }
+
+                }
+                if (ss1.hp <= 0)
+                {
+                    //游戏结束
+                    //根据玩家分数增加玩家金币数量
+                    Player.Gold = Player.Gold + Convert.ToInt32(Player.Score / 10);
+                    /*ss1.Scale = 1f;
+                    PlaneFlakes.RemoveAt(ii);*/
+                    //画字----------------------
+                    g.ResetTransform();
+                    g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan                    
+                    g.TranslateTransform(0, 100, MatrixOrder.Append); //pan
+                    Font font = new Font("微软雅黑", 72);
+                    Brush brush = new SolidBrush(Color.White);
+                    g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.SingleBitPerPixel;
+                    g.DrawString("Game Over", font, brush, PointF.Empty);
+                    //-----------------------
+                    //画字----------------------
+                    g.ResetTransform();
+                    g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan
+                    font = new Font("微软雅黑", 50);
+                    g.TranslateTransform(0, 200, MatrixOrder.Append); //pan
+                    g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.SingleBitPerPixel;
+                    g.DrawString("按下空格键回到开始界面", font, brush, PointF.Empty);
+                    //-----------------------
+                    //画字----------------------
+                    g.ResetTransform();
+                    g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan                    
+                    g.TranslateTransform(0, 300, MatrixOrder.Append); //pan
+                    font = new Font("微软雅黑", 60);
+                    brush = new SolidBrush(Color.White);
+                    g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.SingleBitPerPixel;
+                    g.DrawString("你的得分为：" + Player.Score.ToString(), font, brush, PointF.Empty);
+                    //-----------------------
+                    GameCenterTimer.Enabled = false;
+                    timer1.Enabled = false;
+                    timer2.Enabled = false;
+                    timer3.Enabled = false;
+                    timer3.Stop();
+                    timer2.Stop();
+                    timer1.Stop();
+                    //MessageBox.Show("Game Over,你的得分为：" + Player.Score.ToString() + "点击确定后，按下空格键继续");
+                    GameOver = true;
+                    //记录最高分数据
+                    if (Player.Score > Player.MaxScore)
+                    {
+                        Player.MaxScore = Player.Score;
+
+                    }
+                    WriteXML();//存档
+                }
+                else
+                {
+                    Image newImage = Image.FromFile(Application.StartupPath.ToString() + "\\" + "Resources\\Plane\\A02.png");
+                    // Create rectangle for displaying image.
+                    Rectangle destRect = new Rectangle((int)100, (int)100, 400, 100);
+                    int a = 1;
+                    ss1.ImageMoveCount++;
+                    if (ss1.ImageMoveCount / 2 > 4)
+                    {
+                        ss1.ImageMoveCount = 1;
+                        a = 1;
+                    }
+                    if (ss1.ImageMoveCount / 2 < 1)
+                    {
+                        ss1.ImageMoveCount = 1;
+                        a = 1;
+                    }
+                    a = (int)ss1.ImageMoveCount / 4;
+                    if (ss1.Invincible == false)
+                    {
+                        newImage = Image.FromFile(Application.StartupPath.ToString() + "\\" + "Resources\\Plane\\A02.png");
+                    }
+                    else
+                    {
+                        //if(ss1.ImageMoveCount%2==0)
+                        newImage = Image.FromFile(Application.StartupPath.ToString() + "\\" + "Resources\\Plane\\A02.1.png");
+
+                    }
+                    // Create coordinates of rectangle for source image.
+                    int x = 0;//100*a;
+                    int y = 0;
+                    int width = 100;
+                    int height = 100;
+                    GraphicsUnit units = GraphicsUnit.Pixel;
+                    g.ResetTransform();
+                    g.ScaleTransform((float)0.2, (float)0.2, MatrixOrder.Append); //scale
+                    g.TranslateTransform(ss1.X - 40, ss1.Y - 22, MatrixOrder.Append); //pan
+                    g.DrawImage(newImage, destRect, x, y, width, height, units); //draw
+
+                }
+                if (ss1.AI_Count == ss1.Attack_interval)
+                {
+                    //发射子弹
+                    ss1.AI_Count = 0;
+                    Weapon(ss1.WeaponID, ss1.X, ss1.Y, ss1.Size, ss1.attack, ss1.BulletID);
+                }
+                else
+                {
+                    //计数增加
+                    ss1.AI_Count++;
+                }
+            }
+        }
+        private void DrawEffect(Graphics g)
+        {
+            for (int ii = 0; ii < EffectFlakes.Count; ii++)
+            {
+                Effect ss1 = EffectFlakes[ii];
+                if (ss1.Mode == 1)
+                {
+                    ss1.lifetime++;
+                    if (ss1.lifetime % ss1.brushtime == 0)
+                    {
+                        ss1.imageID++;
+                        ss1.image = Image.FromFile(Application.StartupPath.ToString() + "\\" + "Resources\\Effect\\E" + ss1.actID + "\\" + ss1.imageID + ".png");
+
+                    }
+                    if (ss1.Y > this.Height || ss1.lifetime >= ss1.lifemax || ss1.X > this.Width)
+                    {
+                        //ss1.X = 1f;
+                        ss1.XVelocity = 0f;
+                        ss1.YVelocity = 0f;
+                        ss1.lifetime = 0;
+                        ss1.Scale = 1f;
+                        EffectFlakes.RemoveAt(ii);
+                    }
+                    else
+                    {
+                        //绘制特效图像
+                        g.ResetTransform();
+                        g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan
+                        g.ScaleTransform(ss1.Scale, ss1.Scale, MatrixOrder.Append); //scale
+                        g.RotateTransform(ss1.Rotation, MatrixOrder.Append); //rotate
+                        g.TranslateTransform(ss1.X - ((ss1.MoveX) * ss1.Scale), ss1.Y - ((ss1.MoveY) * ss1.Scale), MatrixOrder.Append); //pan
+                        g.DrawImage(ss1.image, 0, 0); //draw
+                    }
+                }
+            }
+        }
+        private void DrawUI(Graphics g)
+        {
+            //绘制音量图标
+            g.ResetTransform();
+            g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan
+            g.ScaleTransform((float)0.5, (float)0.5, MatrixOrder.Append); //scale
+            g.TranslateTransform(730, 15, MatrixOrder.Append); //pan
+            g.DrawImage(UI.SoundImage, 0, 0); //draw
+                                              //绘制暂停图标
+            g.ResetTransform();
+            g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan
+            g.ScaleTransform((float)1.5, (float)1.5, MatrixOrder.Append); //scale
+            g.TranslateTransform(715, 38, MatrixOrder.Append); //pan
+            g.DrawImage(UI.Stop, 0, 0); //draw
+                                        //绘制鼠标图标
+            g.ResetTransform();
+            g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan
+            g.ScaleTransform((float)0.5, (float)0.5, MatrixOrder.Append); //scale
+            g.TranslateTransform(670, 20, MatrixOrder.Append); //pan
+            g.DrawImage(UI.Mouse, 0, 0); //draw
+                                         //画框
+            g.ResetTransform();
+            g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan
+            g.ScaleTransform(1, (float)1.1, MatrixOrder.Append); //scale
+            g.TranslateTransform(4, 5, MatrixOrder.Append); //pan
+            g.DrawImage(UI.hpimage2, 0, 0); //draw
+                                            //画条
+            if (PlaneFlakes[0].hp > 0)
+            {
+                g.ResetTransform();
+                g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan
+                g.ScaleTransform((float)PlaneFlakes[0].hp / (float)PlaneFlakes[0].maxhp, 1, MatrixOrder.Append); //scale
+                g.TranslateTransform(0, 0, MatrixOrder.Append); //pan
+                g.DrawImage(UI.hpimage, 0, 0); //draw
+                                               //画字
+                g.ResetTransform();
+                g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan
+                g.TranslateTransform(100, 12, MatrixOrder.Append); //pan
+                Font font = new Font("微软雅黑", 16);
+                Brush brush = new SolidBrush(Color.White);
+                g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.SingleBitPerPixel;
+                g.DrawString(PlaneFlakes[0].hp.ToString() + "/" + PlaneFlakes[0].maxhp.ToString(), font, brush, PointF.Empty);
+            }
+            //UI得分
+            g.ResetTransform();
+            //g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan
+            g.TranslateTransform(5, 40, MatrixOrder.Append); //pan
+            g.ScaleTransform(1, 1, MatrixOrder.Append); //scale
+            g.TranslateTransform(0, 0, MatrixOrder.Append); //pan
+            g.DrawImage(UI.Score, 0, 0); //draw
+                                         //得分
+            g.ResetTransform();
+            //g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan
+            g.TranslateTransform(50, 33, MatrixOrder.Append); //pan
+            Font fo = new Font("微软雅黑", 20);
+            Brush bru = new SolidBrush(Color.White);
+            g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.SingleBitPerPixel;
+            g.DrawString(":" + Player.Score.ToString(), fo, bru, PointF.Empty);
+            //最高得分
+            g.ResetTransform();
+            g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan
+            g.TranslateTransform(15, 71, MatrixOrder.Append); //pan
+            fo = new Font("微软雅黑", 20);
+            bru = new SolidBrush(Color.White);
+            g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.SingleBitPerPixel;
+            g.DrawString("MaxScroe:" + Player.MaxScore, fo, bru, PointF.Empty);
+            //画炸弹
+            g.ResetTransform();
+            g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan
+            g.ScaleTransform(1, (float)1.1, MatrixOrder.Append); //scale
+            g.TranslateTransform(16, 102, MatrixOrder.Append); //pan
+            g.DrawImage(UI.Boom, 0, 0); //draw
+                                        //显示炸弹数量
+            g.ResetTransform();
+            g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan
+            g.TranslateTransform(32, 96, MatrixOrder.Append); //pan
+            fo = new Font("微软雅黑", 16);
+            bru = new SolidBrush(Color.White);
+            g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.SingleBitPerPixel;
+            g.DrawString(":" + Player.BoomCount.ToString(), fo, bru, PointF.Empty);
+            try
+            {
+                if (DB == true)
+                {
+                    //画框
+                    g.ResetTransform();
+                    g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan
+                    g.ScaleTransform(1, (float)1.1, MatrixOrder.Append); //scale
+                    g.TranslateTransform(300, 5, MatrixOrder.Append); //pan
+                    g.DrawImage(UI.hpimage2, 0, 0); //draw
+                                                    //画条
+                    for (int i = 0; i < EnemyFlakes.Count; i++)
+                    {
+                        //标记BOSS在enemyflakes中的索引位置
+                        if (EnemyFlakes[i].IsBoss == true)
+                        {
+                            //记录
+                            BossID = i;
+                            break;
+                        }
+                    }
+                    if (EnemyFlakes[BossID].hp > 0)
+                    {
+                        g.ResetTransform();
+                        g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan
+                        g.ScaleTransform((float)EnemyFlakes[BossID].hp / (float)EnemyFlakes[BossID].maxhp, 1, MatrixOrder.Append); //scale
+                        g.TranslateTransform(296, 0, MatrixOrder.Append); //pan
+                        g.DrawImage(UI.hpimage, 0, 0); //draw
+                                                       //画字
+                        g.ResetTransform();
+                        g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan
+                        g.TranslateTransform(305, 12, MatrixOrder.Append); //pan
+                        Font font = new Font("微软雅黑", 16);
+                        Brush brush = new SolidBrush(Color.White);
+                        g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.SingleBitPerPixel;
+                        g.DrawString("BOSS生命值：" + EnemyFlakes[BossID].hp.ToString() + "/" + EnemyFlakes[BossID].maxhp, font, brush, PointF.Empty);
+                    }
+                }
+            }
+            catch
+            { }
+        }
+        private void DrawBackground(Graphics g)
+        {
+            // 不好用的画背景
+            //*仅在暂停时播放背景
+            UI.BGY++;
+            if (UI.BGY >= 600)
+            {
+                UI.BGY = 0;
+            }
+            g.ResetTransform();
+            g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan
+            g.ScaleTransform(1, (float)1, MatrixOrder.Append); //scale
+            g.TranslateTransform(UI.BGX, UI.BGY, MatrixOrder.Append); //pan
+            g.DrawImage(UI.BG, 0, 0); //draw
+                                      /*UI.BGY2--;
+                                      if (UI.BGY2 <=600)
+                                      {
+                                          UI.BGY2 = 1200;
+                                      }*/
+            g.ResetTransform();
+            g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan
+            g.ScaleTransform(1, (float)1, MatrixOrder.Append); //scale
+            g.TranslateTransform(0, -600 + UI.BGY, MatrixOrder.Append); //pan
+            g.DrawImage(UI.BG, 0, 0); //draw
+        }
+        private void DrawStopCanves(Graphics g)
+        { //绘制音量图标
+            g.ResetTransform();
+            g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan
+            g.ScaleTransform((float)0.5, (float)0.5, MatrixOrder.Append); //scale
+            g.TranslateTransform(730, 15, MatrixOrder.Append); //pan
+            g.DrawImage(UI.SoundImage, 0, 0); //draw
+                                              //绘制鼠标图标
+            g.ResetTransform();
+            g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan
+            g.ScaleTransform((float)0.5, (float)0.5, MatrixOrder.Append); //scale
+            g.TranslateTransform(670, 20, MatrixOrder.Append); //pan
+            g.DrawImage(UI.Mouse, 0, 0); //draw
+                                         //-------------
+            g.ResetTransform();
+            g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan                    
+            g.TranslateTransform(100, 140, MatrixOrder.Append); //pan
+            Font font = new Font("微软雅黑", 60);
+            Brush brush = new SolidBrush(Color.White);
+            g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.SingleBitPerPixel;
+            g.DrawString("游戏暂停中...", font, brush, PointF.Empty);
+            g.ResetTransform();
+            g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan                    
+            g.TranslateTransform(100, 260, MatrixOrder.Append); //pan
+            font = new Font("微软雅黑", 60);
+            brush = new SolidBrush(Color.White);
+            g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.SingleBitPerPixel;
+            g.DrawString("按下空格键继续...", font, brush, PointF.Empty);
+        }
+        private void DrawStartCanves(Graphics g)
+        {
+            //绘制背景
+            g.ResetTransform();
+            g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan
+            g.ScaleTransform((float)0.75, (float)0.75, MatrixOrder.Append); //scale
+            g.TranslateTransform(0, 0, MatrixOrder.Append); //pan
+            g.DrawImage(UI.BackG, 0, 0); //draw
+                                         //绘制金币图标
+            g.ResetTransform();
+            g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan
+            g.ScaleTransform((float)0.5, (float)0.5, MatrixOrder.Append); //scale
+            g.TranslateTransform(10, 50, MatrixOrder.Append); //pan
+            g.DrawImage(UI.gold, 0, 0); //draw
+                                        //显示金币数量
+            g.ResetTransform();
+            g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan
+            g.TranslateTransform(40, 55, MatrixOrder.Append); //pan
+            Font fo = new Font("微软雅黑", 16);
+            Brush bru = new SolidBrush(Color.White);
+            g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.SingleBitPerPixel;
+            g.DrawString(":" + Player.Gold.ToString(), fo, bru, PointF.Empty);
+            //绘制音量图标
+            g.ResetTransform();
+            g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan
+            g.ScaleTransform((float)0.5, (float)0.5, MatrixOrder.Append); //scale
+            g.TranslateTransform(730, 15, MatrixOrder.Append); //pan
+            g.DrawImage(UI.SoundImage, 0, 0); //draw
+                                              //绘制开始按钮
+            g.ResetTransform();
+            g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan
+            g.ScaleTransform(1, (float)1.1, MatrixOrder.Append); //scale
+            g.TranslateTransform(240, 200, MatrixOrder.Append); //pan
+            g.DrawImage(UI.PlayBtn, 0, 0); //draw
+                                           //绘制鼠标图标
+            g.ResetTransform();
+            g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan
+            g.ScaleTransform((float)0.5, (float)0.5, MatrixOrder.Append); //scale
+            g.TranslateTransform(670, 20, MatrixOrder.Append); //pan
+            g.DrawImage(UI.Mouse, 0, 0);
+            //draw
+            //Drawtest(g);
+            //绘制其他按钮
+            /*
+                                         g.ResetTransform();
+                                         g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan
+                                         g.ScaleTransform(1, (float)1.1, MatrixOrder.Append); //scale
+                                         g.TranslateTransform(280, 325, MatrixOrder.Append); //pan
+                                         g.DrawImage(UI.ShopBtn, 0, 0); //draw
+            */
+        }
+        #endregion
+
+        //Form event
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            //判断是否有新的更新日志
+            StreamReader sR = File.OpenText(Application.StartupPath.ToString() + "\\" + "更新日志.txt");
+            string sss = sR.ReadToEnd();
+            sR.Close();
+            if (sss != "")
+            {
+                UpdateBox ub = new UpdateBox();
+                ub.Show();
+                //显示并清空
+            }
+
+            Form = this;
+
+            splayer = new SoundPlayer();
+
+            LoadXml();
+            GameMusic = Application.StartupPath.ToString() + "\\" + "Resources\\Sound\\1.wav";
+
+            if (Game.Music == true)
+            {
+                splayer.Stop();
+                splayer.SoundLocation = GameMusic;
+                splayer.PlayLooping();
+                UI.SoundImage = Image.FromFile(Application.StartupPath.ToString() + "\\" + "Resources\\UI\\soundon.png");
+            }
+            else
+            {
+                UI.SoundImage = Image.FromFile(Application.StartupPath.ToString() + "\\" + "Resources\\UI\\soundoff.png");
+                splayer.Stop();
+            }
+            //在游戏画布中创建玩家的飞机
+
+            try
+            {
+                Plane s = new Plane();
+                Random rd = new Random();
+                s.X = 400;
+                s.Y = 300;
+                s.reg = 180;
+                Player.PlaneID = 2;
+                s.Size = 32;
+                s.deviation = 8;
+                s.Scale = 3;
+                s.MoveX = 16;
+                s.MoveY = 16;
+                if (Player.MaxScore > 4000)
+                {
+                    s.WeaponID = 201;
+                }
+                else
+                {
+                    s.WeaponID = 1;
+                }
+                try
+                {
+                    s.image = Image.FromFile(Application.StartupPath.ToString() + "\\" + "Resources\\Plane\\" + Player.PlaneID + ".png");
+
+                }
+                catch
+                {
+                }
+                PlaneFlakes.Add(s);
+            }
+            catch
+            {
+
+            }
+            //
+        }
+        /// <summary>
+        /// 主绘制函数
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void Form1_Paint(object sender, PaintEventArgs e)
+        {
+            BufferedGraphicsContext currentContext = BufferedGraphicsManager.Current;
+            BufferedGraphics myBuffer = currentContext.Allocate(e.Graphics, e.ClipRectangle);
+            Graphics g = myBuffer.Graphics;
+            g.Clear(Color.Transparent);
+            g.SmoothingMode = SmoothingMode.HighSpeed;
+
+            if (Canves == 0)
+            {
+                // 不好用的画背景
+                //*仅在暂停时播放背景
+                UI.BGY++;
+                if (UI.BGY >= 600)
+                {
+                    UI.BGY = 0;
+                }
+                g.ResetTransform();
+                g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan
+                g.ScaleTransform(1, (float)1, MatrixOrder.Append); //scale
+                g.TranslateTransform(UI.BGX, UI.BGY, MatrixOrder.Append); //pan
+                g.DrawImage(UI.BG, 0, 0); //draw
+                /*UI.BGY2--;
+                if (UI.BGY2 <=600)
+                {
+                    UI.BGY2 = 1200;
+                }*/
+                g.ResetTransform();
+                g.TranslateTransform(-16, -16, MatrixOrder.Append); //pan
+                g.ScaleTransform(1, (float)1, MatrixOrder.Append); //scale
+                g.TranslateTransform(0, -600 + UI.BGY, MatrixOrder.Append); //pan
+                g.DrawImage(UI.BG, 0, 0); //draw
+            }
+
+
+            if (Canves == 1)
+            {
+
+                //绘制背景
+                DrawBackground(g);
+                //绘制玩家的飞机
+                DrawPlane(g);
+                //绘制敌人的飞机
+                DrawEnemy(g);
+                //绘制激光
+                DrawLight(g);
+                //绘制子弹
+                DrawBullet(g);
+                //绘制特效
+                DrawEffect(g);
+                //绘制UI
+                DrawUI(g);
+
+            }
+            //暂停界面
+            if (Canves == 0)
+            {
+                DrawStopCanves(g);
+            }
+            //游戏开始界面
+            if (Canves == 2)
+            {
+                DrawStartCanves(g);
+            }
+            myBuffer.Render(e.Graphics);
+            g.Dispose();
+            myBuffer.Dispose();
+        }
+        //Player control
+        private void Form1_KeyDown(object sender, KeyEventArgs e)
+        {
+            try
+            {
+                if (Canves != 1)
+                {
+                    return;
+                }
+                //Trace.WriteLine(e.KeyCode.ToString());
+                if (e.KeyCode == Keys.Up || e.KeyCode == Keys.W)
+                {
+                    Player.KeyIsDown[1] = true;
+                    Player.KeyIsDown[3] = false;
+                }
+                if (e.KeyCode == Keys.Down || e.KeyCode == Keys.S)
+                {
+                    Player.KeyIsDown[3] = true;
+                    Player.KeyIsDown[1] = false;
+                }
+                if (e.KeyCode == Keys.Left || e.KeyCode == Keys.A)
+                {
+                    Player.KeyIsDown[2] = true;
+                    Player.KeyIsDown[4] = false;
+                }
+                if (e.KeyCode == Keys.Right || e.KeyCode == Keys.D)
+                {
+                    Player.KeyIsDown[4] = true;
+                    Player.KeyIsDown[2] = false;
+                }
+                if (e.KeyCode == Keys.ShiftKey)
+                {
+                    Trace.WriteLine("按下shift");
+                    Player.KeyIsDown[5] = true;
+                }
+                PlaneMove();
+            }
+            catch
+            { }
+        }
+        private void Form1_KeyUp(object sender, KeyEventArgs e)
+        {
+            try
+            {
+                if (Canves != 1)
+                {
+                    return;
+                }
+                //Trace.WriteLine("KeyUp:"+e.KeyCode.ToString());
+                if (e.KeyCode == Keys.Up || e.KeyCode == Keys.W)
+                {
+                    Player.KeyIsDown[1] = false;
+                }
+                if (e.KeyCode == Keys.Down || e.KeyCode == Keys.S)
+                {
+                    Player.KeyIsDown[3] = false;
+                }
+                if (e.KeyCode == Keys.Left || e.KeyCode == Keys.A)
+                {
+                    Player.KeyIsDown[2] = false;
+                }
+                if (e.KeyCode == Keys.Right || e.KeyCode == Keys.D)
+                {
+                    Player.KeyIsDown[4] = false;
+                }
+                if (e.KeyCode == Keys.ShiftKey)
+                {
+                    Player.KeyIsDown[5] = false;
+                }
+                PlaneMove();
+            }
+            catch { }
+        }
+        private void Form1_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (GameOver == true)
+            {
+                //Trace.WriteLine(e.KeyChar.ToString());
+                if ((int)e.KeyChar == 32 && Canves != 2)
+                {
+                    Canves = 2;
+                    GameCenterTimer.Enabled = true;
+                    return;
+                }
+            }
+            if ((int)e.KeyChar == 32 && Canves == 1)
+            {
+                if (Player.BoomCount > 0)
+                {
+
+                    if (Game.Music == true)
+                    {
+                        SoundPlay(Application.StartupPath.ToString() + "\\" + "Resources\\Sound\\Game\\Boom.wav");
+                    }
+                    CreateEffect(3, 320, 150);
+                    Boom();
+                }
+            }
+            if ((int)e.KeyChar == 32 && Canves == 0)
+            {
+                GameStop(false);
+            }
+        }
         private void Form1_Activated(object sender, EventArgs e)
         {
             /*if (Canves != 2 && PlaneFlakes[0].hp > 0)
@@ -2307,45 +2538,6 @@ namespace Aircraft_Battle
                 }
             }*/
         }
-
-        private void timer3_Tick(object sender, EventArgs e)
-        {
-            this.timer3.Enabled = false;
-            timer3.Stop();
-            this.timer1.Enabled = false;
-            this.timer2.Enabled = false;
-            GameMusic = Application.StartupPath.ToString()+"\\"+"Resources\\Sound\\2.wav";
-            if (Game.Music == true)
-            {
-                splayer.Stop();
-                splayer.SoundLocation = GameMusic;
-                splayer.PlayLooping();
-            }
-           Thread theader = new Thread(new ThreadStart(new Action(() =>
-            {
-                Thread.Sleep(5000);
-                Player.BoomCount++;
-                Boom();
-                Thread.Sleep(1000);
-                CreateEnemy(6);
-            })));
-            theader.Start();
-            
-        }
-
-        private void timer4_Tick(object sender, EventArgs e)
-        {
-
-        }
-        /// <summary>
-        /// 设置关卡
-        /// </summary>
-        /// <param name="Num">关号</param>
-        public void stage(Int32 Num)
-        { 
-            //关卡-1
-        }
-
         private void Form1_FormClosed(object sender, FormClosedEventArgs e)
         {
             //dv.Dispose();
@@ -2353,10 +2545,14 @@ namespace Aircraft_Battle
             WriteXML();
 
         }
+        private void Form1_Shown(object sender, EventArgs e)
+        {
+            GameStop(true);
+            Canves = 2;
+        }
 
-
-
-        //xml区块----玩家存档
+        //Save&Load
+        #region xml区块----玩家存档
         /// <summary>
         /// 保存数据-玩家属性
         /// </summary>
@@ -2367,10 +2563,10 @@ namespace Aircraft_Battle
         public void WriteXML()
         {
             //假若文件不存在则新建一个xml文件
-            string FileName = "PlayerState.xml";
+            string FileName = Application.StartupPath.ToString() + "\\"+"PlayerState.xml";
             if (!File.Exists(FileName))
             {
-                FileStream fs1 = new FileStream("PlayerState.xml", FileMode.Create, FileAccess.Write);//创建写入文件               
+                FileStream fs1 = new FileStream(Application.StartupPath.ToString() + "\\" + "PlayerState.xml", FileMode.Create, FileAccess.Write);//创建写入文件               
                 //System.IO.File.SetAttributes("PlayerState.xml", FileAttributes.Hidden);
                 StreamWriter sw = new StreamWriter(fs1);
                 sw.WriteLine("<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "\n<PlayerState>" + "\n</PlayerState>");//开始写入值
@@ -2574,7 +2770,7 @@ namespace Aircraft_Battle
         public void LoadXml()
         {
             //假若文件不存在则新建一个xml文件
-            if (!File.Exists("PlayerState.xml"))
+            if (!File.Exists(Application.StartupPath.ToString() + "\\" + "PlayerState.xml"))
             {
                 Player.Gold = 0;
                 Player.Exp = 0;
@@ -2586,7 +2782,7 @@ namespace Aircraft_Battle
             //初始化XML文档操作类
             XmlDocument myDoc = new XmlDocument();
             //加载XML文件
-            myDoc.Load(System.Environment.CurrentDirectory + "\\PlayerState.xml");
+            myDoc.Load(Application.StartupPath.ToString()  + "\\PlayerState.xml");
 
             //搜索指定的节点
             System.Xml.XmlNodeList nodes = myDoc.SelectNodes("//Player");
@@ -2706,13 +2902,15 @@ namespace Aircraft_Battle
                 }
             }
         }
+        /// <summary>
+        /// ？？？
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        #endregion
 
-        private void Form1_Shown(object sender, EventArgs e)
-        {
-            GameStop(true);
-            Canves = 2;
-        }
-
+        //UI&Control
+        #region 界面相关 + 控制
         private void Form1_MouseClick(object sender, MouseEventArgs e)
         {
             if (MouseButtons.Left == e.Button)
@@ -2794,7 +2992,6 @@ namespace Aircraft_Battle
                 }
             }
         }
-
         private void Form1_MouseMove(object sender, MouseEventArgs e)
         {
             //play 图标的变换-移入变亮 移出变暗
@@ -2811,7 +3008,6 @@ namespace Aircraft_Battle
             Game.MouseX = e.X - PlaneFlakes[0].Size/2;
             Game.MouseY = e.Y - PlaneFlakes[0].Size/2;
         }
-
         private void Form1_MouseDown(object sender, MouseEventArgs e)
         {
             if (MouseButtons.Left == e.Button)
@@ -2827,7 +3023,6 @@ namespace Aircraft_Battle
                 }*/
             }
         }
-
         private void Form1_MouseUp(object sender, MouseEventArgs e)
         {
             if (MouseButtons.Left == e.Button)
@@ -2867,7 +3062,6 @@ namespace Aircraft_Battle
                             Player.KeyIsDown[2] = false;
                             Player.KeyIsDown[3] = false;
                             Player.KeyIsDown[4] = false;
-                            
                     }
                     else
                     {
@@ -2884,7 +3078,6 @@ namespace Aircraft_Battle
                 }*/
             }
         }
+        #endregion
     }
-
-
 }
