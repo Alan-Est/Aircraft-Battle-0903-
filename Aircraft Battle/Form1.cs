@@ -29,38 +29,51 @@ using SharpDX.Direct3D;
  * 7.自适应屏幕大小，改变敌机出现范围
  * 8.飞机间碰撞
  * 9.飞机击毁特效
- * 10.飞机游戏音效【准备中】
- * 11.背景【准备中】
- * 12.关卡设计【准备中】
+ * 10.飞机游戏音效【准备中】 需要内容：玩家射进音效 Boss预警音效 Boss 攻击音效
+ * 11.背景
+ * 12.关卡设计【准备中】 分开模块 【关卡模式 & 无尽模式】
  * 13.新的飞机种类
  * 14.背景乐
  * 15.炸弹
- * 16.boss 在60秒时出现
+ * 16.boss 在60秒时出现 之后每隔120s 刷新
  * 17.暂停界面
  * 18.开始界面
  * 19.结算界面
  * 20.新的武器类型-Light 激光
  * 21.更换新的贴图？包装游戏？ 【准备中】
- * 22.
+ * 22.商店界面【待】
  * 23.服务器更新
  * 24.更新内容显示
+ * 25.联机[Socket]模块 & 用户登录模块【待】
+ * 
+ */
+/* 已知问题：
+ * 
+ * 1 BOSS攻击采用匿线程等待缺少了一个BOSS已经死亡的判断.【已修正】
+ *   
+ * 
  */
 namespace Aircraft_Battle
 {
     public partial class Form1 : Form
     {
-        //构造函数
+        static public bool IsDebuging = true;
+
+        /// <summary>
+        /// 构造函数
+        /// </summary>
         public Form1()
         {
             InitializeComponent();
         }
-
-        #region 变量
+        
+        #region 变量区块
         static public bool GameOver = false;
         static public Form1 Form;
         static public int BossID;
         static public bool DB = false;
         static public bool GameIsStop = false;
+        public int IT_Count = 0;
         /// <summary>
         /// 0:暂停，1：游戏，2：开始界面
         /// </summary>
@@ -336,7 +349,7 @@ namespace Aircraft_Battle
             public Color cor;
             public byte Mode = 1;//动画模式
             public short Size = 5;//粗细
-            public int damage = 1;//激光伤害伤害
+            public int damage = 1;//激光伤害
             /// <summary>
             /// 0为敌人的子弹，1为玩家的子弹，默认为0
             /// </summary>
@@ -415,8 +428,8 @@ namespace Aircraft_Battle
         public bool P = true;
         private int EnCount = 0;
         #endregion
-
-        //Other
+        
+        #region Other
         /// <summary>
         /// 播放一个波形 -DirectSound
         /// </summary>
@@ -1345,6 +1358,7 @@ namespace Aircraft_Battle
                    Thread theader = new Thread(new ThreadStart(new Action(() =>
                    {
                        Thread.Sleep(600);
+                       if (DB)
                        for (int i = 0; i < 12; i++)
                        {
                            Bullet bs = new Bullet();
@@ -1369,7 +1383,8 @@ namespace Aircraft_Battle
                        }     
                        Thread.Sleep(1000);
                        //第三下
-                       for (int a = 0; a < 18; a++)
+                       if (DB)
+                           for (int a = 0; a < 18; a++)
                        {
                            for (int i = 0; i < 6; i++)
                            {
@@ -1447,32 +1462,35 @@ namespace Aircraft_Battle
                        }
                        Thread.Sleep(150);*/
                        //Trace.WriteLine("BOSS攻击触发");
-                       s = new Bullet();
-                       s.X = x /*+ (float)size / 2*/;
-                       s.Y = y /*+ (float)size / 2*/;
-                       s.ownning = 0;
-                       s.reg = Atan2ForCoordinate(x, y, PlaneFlakes[0].X, PlaneFlakes[0].Y);
-                       s.damage = attack;
-                       s.Scale = 3;
-                       s.speed = 7;
-                       try
+                       if (DB)
                        {
-                           s.image = Image.FromFile(Application.StartupPath.ToString()+"\\"+"Resources\\Bullet\\" + 8 + ".png");
+                           s = new Bullet();
+                           s.X = x /*+ (float)size / 2*/;
+                           s.Y = y /*+ (float)size / 2*/;
+                           s.ownning = 0;
+                           s.reg = Atan2ForCoordinate(x, y, PlaneFlakes[0].X, PlaneFlakes[0].Y);
+                           s.damage = attack;
+                           s.Scale = 3;
+                           s.speed = 7;
+                           try
+                           {
+                               s.image = Image.FromFile(Application.StartupPath.ToString() + "\\" + "Resources\\Bullet\\" + 8 + ".png");
+                           }
+                           catch (Exception Ex)
+                           {
+                               //MessageBox.Show("Error:" + Ex.Message + "::Location 07", "Aircraft Battle Error Message");
+                               return;
+                           }
+                           BulletFlakes.Add(s);
                        }
-                       catch (Exception Ex)
-                       {
-                           //MessageBox.Show("Error:" + Ex.Message + "::Location 07", "Aircraft Battle Error Message");
-                           return;
-                       }
-                       BulletFlakes.Add(s);
                    })));
                    theader.Start();
             }
         }
         /// <summary>
-        /// 使用炸弹 自动判断玩家的炸弹数量
-        /// 清除屏幕的所有非玩家的子弹并且对所有敌人造成demage（20）点伤害
-        /// </summary>
+        /// 使用炸弹
+        /// <para>清除屏幕的所有非玩家的子弹并且对所有敌人造成demage（20）点伤害</para>
+        /// </summary> 
         public void Boom(int demage = 20)
         { 
             if (Player.BoomCount>0)
@@ -1497,10 +1515,9 @@ namespace Aircraft_Battle
             }
 
         }
+        #endregion
 
-
-        //Game timer event 
-        public int IT_Count = 0;
+        #region Game timer event         
         private void InvincibleTimer_Tick(object sender, EventArgs e)
         {
             if (PlaneFlakes[0].Invincible == true)
@@ -1606,6 +1623,7 @@ namespace Aircraft_Battle
         {
 
         }
+        #endregion
 
         #region 绘图相关
         /// <summary>
@@ -2267,7 +2285,7 @@ namespace Aircraft_Battle
         }
         #endregion
 
-        //Form event
+        #region Form event
         private void Form1_Load(object sender, EventArgs e)
         {
             //判断是否有新的更新日志
@@ -2550,9 +2568,10 @@ namespace Aircraft_Battle
             GameStop(true);
             Canves = 2;
         }
+        #endregion
 
-        //Save&Load
         #region xml区块----玩家存档
+        //Save&Load
         /// <summary>
         /// 保存数据-玩家属性
         /// </summary>
@@ -2909,8 +2928,8 @@ namespace Aircraft_Battle
         /// <param name="e"></param>
         #endregion
 
-        //UI&Control
         #region 界面相关 + 控制
+        //UI&Control
         private void Form1_MouseClick(object sender, MouseEventArgs e)
         {
             if (MouseButtons.Left == e.Button)
