@@ -1,0 +1,26 @@
+d:\vs\game\Aircraft Battle\Aircraft Battle\obj\x86\Debug\Aircraft Battle.csproj.GenerateResource.Cache
+D:\vs\game\Aircraft Battle\Aircraft Battle\bin\Debug\Aircraft Battle.exe.config
+D:\vs\game\Aircraft Battle\Aircraft Battle\bin\Debug\Aircraft Battle.exe
+D:\vs\game\Aircraft Battle\Aircraft Battle\bin\Debug\Aircraft Battle.pdb
+D:\vs\game\Aircraft Battle\Aircraft Battle\obj\x86\Debug\Aircraft_Battle.Form1.resources
+D:\vs\game\Aircraft Battle\Aircraft Battle\obj\x86\Debug\Aircraft_Battle.Properties.Resources.resources
+D:\vs\game\Aircraft Battle\Aircraft Battle\obj\x86\Debug\Aircraft Battle.exe
+D:\vs\game\Aircraft Battle\Aircraft Battle\obj\x86\Debug\Aircraft Battle.pdb
+d:\vs\game\Aircraft Battle\Aircraft Battle\obj\x86\Debug\Aircraft Battle.csprojResolveAssemblyReference.cache
+C:\Users\hp\Documents\Tencent Files\3202715506\FileRecv\Aircraft Battle [0903]\Aircraft Battle\bin\Debug\Aircraft Battle.exe.config
+C:\Users\hp\Documents\Tencent Files\3202715506\FileRecv\Aircraft Battle [0903]\Aircraft Battle\obj\x86\Debug\Aircraft Battle.exe
+C:\Users\hp\Documents\Tencent Files\3202715506\FileRecv\Aircraft Battle [0903]\Aircraft Battle\obj\x86\Debug\Aircraft Battle.pdb
+C:\Users\hp\Documents\Tencent Files\3202715506\FileRecv\Aircraft Battle [0903]\Aircraft Battle\bin\Debug\Aircraft Battle.exe
+C:\Users\hp\Documents\Tencent Files\3202715506\FileRecv\Aircraft Battle [0903]\Aircraft Battle\bin\Debug\Aircraft Battle.pdb
+C:\Users\hp\Documents\Tencent Files\3202715506\FileRecv\Aircraft Battle [0903]\Aircraft Battle\obj\x86\Debug\Aircraft Battle.csprojResolveAssemblyReference.cache
+C:\Users\hp\Documents\Tencent Files\3202715506\FileRecv\Aircraft Battle [0903]\Aircraft Battle\obj\x86\Debug\Aircraft_Battle.Form1.resources
+C:\Users\hp\Documents\Tencent Files\3202715506\FileRecv\Aircraft Battle [0903]\Aircraft Battle\obj\x86\Debug\Aircraft_Battle.Properties.Resources.resources
+C:\Users\hp\Documents\Tencent Files\3202715506\FileRecv\Aircraft Battle [0903]\Aircraft Battle\obj\x86\Debug\Aircraft Battle.csproj.GenerateResource.Cache
+C:\Users\hp\Documents\Tencent Files\3202715506\FileRecv\Aircraft Battle [0903]\Aircraft Battle\obj\x86\Debug\Aircraft_Battle.UpdateBox.resources
+C:\Users\hp\Documents\Tencent Files\3202715506\FileRecv\Aircraft Battle [0903]\Aircraft Battle\bin\Debug\Microsoft.DirectX.DirectSound.dll
+C:\Users\hp\Documents\Tencent Files\3202715506\FileRecv\Aircraft Battle [0903]\Aircraft Battle\bin\Debug\Microsoft.DirectX.dll
+C:\Users\hp\Documents\Tencent Files\3202715506\FileRecv\Aircraft Battle [0903]\Aircraft Battle\bin\Debug\Microsoft.DirectX.xml
+C:\Users\hp\Documents\Tencent Files\3202715506\FileRecv\Aircraft Battle [0903]\Aircraft Battle\bin\Debug\Microsoft.DirectX.DirectSound.xml
+C:\Users\hp\Documents\Tencent Files\3202715506\FileRecv\Aircraft Battle [0903]\Aircraft Battle\bin\Debug\SharpDX.dll
+C:\Users\hp\Documents\Tencent Files\3202715506\FileRecv\Aircraft Battle [0903]\Aircraft Battle\bin\Debug\SharpDX.pdb
+C:\Users\hp\Documents\Tencent Files\3202715506\FileRecv\Aircraft Battle [0903]\Aircraft Battle\obj\x86\Debug\Aircraft_Battle.Shop.resources

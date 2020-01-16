@@ -2288,6 +2288,8 @@ namespace Aircraft_Battle
         #region Form event
         private void Form1_Load(object sender, EventArgs e)
         {
+            Shop shop = new Shop();
+            shop.Show();
             //判断是否有新的更新日志
             StreamReader sR = File.OpenText(Application.StartupPath.ToString() + "\\" + "更新日志.txt");
             string sss = sR.ReadToEnd();
@@ -3088,6 +3090,8 @@ namespace Aircraft_Battle
                         UI.PlayBtn = Image.FromFile(Application.StartupPath.ToString()+"\\"+"Resources\\UI\\btn_play_0.png");
                         //play按钮被点击松开  游戏开始
                         GameStop(false);
+                        GameOver = false;
+                        GameStart();
                         Canves = 1;
                     }
                 }
